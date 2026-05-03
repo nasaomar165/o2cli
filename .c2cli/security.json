@@ -1,0 +1,48 @@
+{
+
+//   ─── Trusted Directories ──────────────────────────────────
+//   When your CWD is inside a trusted directory AND
+//   confirm_before_execute is true, the confirmation menu
+//   is skipped (commands execute immediately with --exec).
+  
+//   [SECURITY] Only add directories you fully control.
+//              Paths are resolved to absolute form.
+  
+//   Manage via CLI:
+//     o2cli config --trust-dir /home/user/projects
+{
+//   "trusted_dirs": [
+//     "/home/user/projects",
+//     "/home/user/scripts"
+//   ],
+
+  // ─── Allowed Command Patterns ─────────────────────────────
+  // Commands matching these patterns SKIP the static danger
+  // check and LLM safety check. Uses anchored regex matching
+  // (not fnmatch glob).
+  //
+  // Pattern format (glob-like, converted to regex):
+  //   "git *"      → matches "git status", "git log", etc.
+  //   "ls"         → matches exactly "ls"
+  //   "docker ps"  → matches exactly "docker ps"
+  //
+  // [SECURITY] Rules:
+  //   - Pattern "*" alone is REJECTED (too permissive)
+  //   - Commands with shell metacharacters (; & | ` $ etc.)
+  //     are NOT matched even if the pattern matches
+  //   - Always validate before adding
+  //
+  // Manage via CLI:
+  //   o2cli config --allow "git *"
+  //   o2cli config --allow "docker *
+//   "allowed_patterns": [
+//     "git *",
+//     "ls",
+//     "docker ps",
+//     "docker compose *",
+//     "kubectl get *",
+//     "npm *",
+//     "pip *"
+//   ]
+}
+}
