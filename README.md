@@ -12,7 +12,7 @@
 
 - **Natural Language to Command**: Convert everyday English into precise shell commands (`o2cli ask`).
 - **100% Local Privacy**: Powered by local LLMs via Ollama or LM Studio.
-- **Interactive Chat**: A dedicated chat interface with handy slash commands (`/ask`, `/run`).
+- **Interactive Chat**: A dedicated chat interface with handy slash commands (`/ask`, `/chat`).
 - **Hardened Security**:
   - Built-in static danger checks (automatically blocks destructive commands like `rm -rf /`).
   - Optional AI safety audits (`--llm-safety`).
