@@ -1,0 +1,19 @@
+{
+  "backend": {
+    "provider": "lmstudio or Ollama",
+    "base_url": "http://localhost:1234/v1 or http://localhost:11434/v1",
+    "model": "Your Preferred Model",
+    "api_key": "not-needed",
+    "temperature": 0.1,
+    "max_tokens": 512,
+    "timeout": 30.0
+  },
+
+  "shell": {
+    "preferred_shell": ["auto", "bash", "zsh", "powershell", "cmd"],
+    "confirm_before_execute": true,
+    "explain_commands": true,
+    "no_history": false
+  },
+  "active_profile": "default"
+}
