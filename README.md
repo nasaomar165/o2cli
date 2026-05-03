@@ -35,11 +35,11 @@ Created README.md
 ```
 2.Move it to your PATH (optional):
 ```bash
-sudo mv o2cli.py /usr/local/bin/o2cli
+  sudo mv o2cli.py /usr/local/bin/o2cli
 ```
 3.Run it to install dependencies:
 ```bash
-o2cli --version
+  o2cli --version
 ```
 
 ## ⚙️ Getting Started
@@ -47,18 +47,18 @@ Before using O2Cli, ensure you have either Ollama or LM Studio running locally.
 
 Run the configuration wizard to set up your provider, model, and preferred shell:
 ```bash
-o2cli config --wizard
+  o2cli config --wizard
 ```
 You can check your connection to the LLM backend at any time:
 ```bash
-o2cli check
+  o2cli check
 ```
 ##📖 Usage
 Ask for a Command
 Convert natural language to a terminal command. By default, it explains the command and asks for confirmation before executing.
 ```bash
-o2cli ask "find all python files modified in the last 7 days"
-o2cli ask "undo my last git commit"
+  o2cli ask "find all python files modified in the last 7 days"
+  o2cli ask "undo my last git commit"
 ```
 Helpful flags:
 
@@ -82,21 +82,21 @@ Inside the chat, you can use:
 ##Manage Aliases
 Save complex or frequently used prompts. Aliases support template variables like `{branch}`.
 ```bash
-# Create an alias
-o2cli alias set update "update system packages and clean up"
-o2cli alias set push_branch "push current git branch to origin/{branch}"
+  # Create an alias
+  o2cli alias set update "update system packages and clean up"
+  o2cli alias set push_branch "push current git branch to origin/{branch}"
 
-# Run an alias
-o2cli alias run update
+  # Run an alias
+  o2cli alias run update
 ```
 
 Command History
 View and manage your command history.
 ```bash
-o2cli history             # View recent history
-o2cli history --stats     # View usage statistics
-o2cli history -r 3        # Re-run command #3 from history
-o2cli history -y 5        # Copy command #5 to clipboard
+  o2cli history             # View recent history
+  o2cli history --stats     # View usage statistics
+  o2cli history -r 3        # Re-run command #3 from history
+  o2cli history -y 5        # Copy command #5 to clipboard
 ```
 
 ## 🛡️ Security
