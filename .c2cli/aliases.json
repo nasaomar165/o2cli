@@ -1,0 +1,22 @@
+{
+    // ─── Quick Shortcuts ──────────────────────────────────────
+    // Save repetitive natural-language tasks as short aliases.
+    // Supports -template- variables for dynamic values.
+    //
+    //  Usage:
+    //   o2cli alias run ports
+    //   o2cli alias run compress
+    //   o2cli alias run find-process
+
+    
+    "ports": "list all open ports",
+    "compress": "compress {file} into {archive}",
+    "find-process": "find process using port {port}",
+    "disk": "show disk usage in human-readable format",
+    "git-log": "show last 10 git commits with one-line format",
+    "kill-port": "find and kill the process on port {port}",
+    "docker-clean": "remove all stopped docker containers and dangling images",
+    "big-files": "find files larger than {size} in current directory",
+    "env-check": "show node python and git versions",
+    "git-reset": "soft reset to the previous commit keeping changes staged"
+}
