@@ -1,0 +1,1567 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>O2Cli — AI-Powered CLI for Your Terminal</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@600&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-variant": "#30353b",
+                        "on-tertiary-fixed-variant": "#3f4851",
+                        "error-container": "#93000a",
+                        "on-tertiary-container": "#e8f1fd",
+                        "surface-container-high": "#252a30",
+                        "secondary": "#78dc86",
+                        "surface-container": "#1b2026",
+                        "primary-container": "#0969da",
+                        "outline": "#8c909f",
+                        "inverse-on-surface": "#2c3137",
+                        "on-primary-fixed-variant": "#004493",
+                        "on-primary-container": "#ecefff",
+                        "surface": "#0f1419",
+                        "on-primary": "#002e68",
+                        "on-secondary": "#003913",
+                        "on-secondary-fixed-variant": "#00531e",
+                        "secondary-container": "#007930",
+                        "primary": "#adc6ff",
+                        "on-background": "#dee3eb",
+                        "error": "#ffb4ab",
+                        "inverse-surface": "#dee3eb",
+                        "surface-container-highest": "#30353b",
+                        "background": "#0f1419",
+                        "inverse-primary": "#005bc0",
+                        "secondary-fixed-dim": "#78dc86",
+                        "surface-container-lowest": "#0a0f14",
+                        "tertiary": "#bec7d2",
+                        "on-tertiary-fixed": "#141c25",
+                        "surface-bright": "#353a40",
+                        "on-error-container": "#ffdad6",
+                        "on-secondary-container": "#99fea4",
+                        "tertiary-container": "#656e78",
+                        "on-tertiary": "#29313a",
+                        "on-secondary-fixed": "#002108",
+                        "on-error": "#690005",
+                        "primary-fixed-dim": "#adc6ff",
+                        "surface-container-low": "#171c22",
+                        "surface-dim": "#0f1419",
+                        "secondary-fixed": "#94f99f",
+                        "on-surface-variant": "#c2c6d6",
+                        "on-surface": "#dee3eb",
+                        "surface-tint": "#adc6ff",
+                        "tertiary-fixed-dim": "#bec7d2",
+                        "outline-variant": "#424753",
+                        "on-primary-fixed": "#001a41",
+                        "primary-fixed": "#d8e2ff",
+                        "tertiary-fixed": "#dae3ef"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "margin-page": "64px",
+                        "stack-lg": "32px",
+                        "stack-md": "16px",
+                        "unit": "4px",
+                        "stack-sm": "8px",
+                        "gutter": "24px",
+                        "container-max": "1200px",
+                        "stack-xl": "64px"
+                    },
+                    "fontFamily": {
+                        "label-caps": ["Space Grotesk"],
+                        "code-md": ["JetBrains Mono", "monospace"],
+                        "body-lg": ["Inter"],
+                        "display-xl": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "body-md": ["Inter"],
+                        "headline-md": ["Inter"]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .glass-panel {
+            background: rgba(15, 20, 25, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(110, 119, 129, 0.2);
+        }
+        .terminal-header {
+            background: #24292F;
+            border-bottom: 1px solid rgba(110, 119, 129, 0.2);
+        }
+        .glow-cyan {
+            box-shadow: 0 0 20px rgba(9, 105, 218, 0.3);
+        }
+        .glow-green {
+            box-shadow: 0 0 20px rgba(120, 220, 134, 0.15);
+        }
+        .syntax-keyword { color: #adc6ff; }
+        .syntax-string { color: #78dc86; }
+        .syntax-comment { color: #8c909f; }
+        .syntax-number { color: #ffa657; }
+        .syntax-bool { color: #ff7b72; }
+
+        @keyframes scanline {
+            0% { transform: translateY(-100%); }
+            100% { transform: translateY(100%); }
+        }
+        @keyframes pulse-grid {
+            0%, 100% { opacity: 0.05; }
+            50% { opacity: 0.15; }
+        }
+        @keyframes float-particle {
+            0% { transform: translateY(0) translateX(0); opacity: 0; }
+            20% { opacity: 0.3; }
+            80% { opacity: 0.3; }
+            100% { transform: translateY(-100vh) translateX(20px); opacity: 0; }
+        }
+        .bg-grid {
+            background-image: linear-gradient(to right, rgba(9, 105, 218, 0.1) 1px, transparent 1px),
+                              linear-gradient(to bottom, rgba(9, 105, 218, 0.1) 1px, transparent 1px);
+            background-size: 50px 50px;
+        }
+        .particle {
+            position: absolute;
+            background: #0969da;
+            border-radius: 50%;
+            pointer-events: none;
+        }
+        .pipeline-step {
+            position: relative;
+        }
+        .pipeline-step:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            left: 50%;
+            bottom: -24px;
+            width: 1px;
+            height: 24px;
+            background: linear-gradient(to bottom, rgba(9, 105, 218, 0.5), transparent);
+        }
+        .danger-tag {
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .cmd-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+        }
+        html { scroll-behavior: smooth; }
+        .nav-link {
+            position: relative;
+        }
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: #0969DA;
+            transition: width 0.2s ease;
+        }
+        .nav-link:hover::after,
+        .nav-link.active::after {
+            width: 100%;
+        }
+        .tab-btn {
+            transition: all 0.2s ease;
+        }
+        .tab-btn.active {
+            background: rgba(9, 105, 218, 0.15);
+            color: #adc6ff;
+            border-color: rgba(9, 105, 218, 0.4);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md selection:bg-primary-container selection:text-white">
+<canvas class="fixed inset-0 -z-20 pointer-events-none" id="network-bg"></canvas>
+
+<!-- TopNavBar -->
+<nav class="bg-[#0d1117]/50 backdrop-blur-xl fixed top-0 w-full z-50 border-b border-[#30363d]/50">
+<div class="flex justify-between items-center h-16 px-6 max-w-7xl mx-auto">
+<div class="flex items-center gap-3">
+<div class="font-mono text-xl font-bold tracking-tighter text-white">
+    O2Cli
+</div>
+<span class="hidden sm:inline-flex items-center px-2 py-0.5 bg-primary-container/15 border border-primary-container/30 rounded text-[10px] font-code-md text-primary">v0.2.0</span>
+</div>
+<div class="hidden md:flex gap-stack-lg">
+<a class="nav-link active font-inter text-sm font-medium tracking-tight text-[#dee3eb] hover:text-white transition-all duration-200" href="#features">Features</a>
+<a class="nav-link font-inter text-sm font-medium tracking-tight text-[#8b949e] hover:text-white transition-all duration-200" href="#security">Security</a>
+<a class="nav-link font-inter text-sm font-medium tracking-tight text-[#8b949e] hover:text-white transition-all duration-200" href="#commands">Commands</a>
+<a class="nav-link font-inter text-sm font-medium tracking-tight text-[#8b949e] hover:text-white transition-all duration-200" href="#config">Config</a>
+<a class="nav-link font-inter text-sm font-medium tracking-tight text-[#8b949e] hover:text-white transition-all duration-200" href="https://github.com/nasaomar165/o2cli" target="_blank">GitHub</a>
+</div>
+<div class="flex items-center gap-4">
+<button id="mobile-menu-btn" class="md:hidden material-symbols-outlined text-[#8b949e] cursor-pointer hover:text-white">menu</button>
+<a href="#quickstart" class="hidden sm:inline-flex bg-primary-container text-on-primary-container px-4 py-2 font-inter text-sm font-medium rounded hover:opacity-80 active:scale-95 transition-all">Get Started</a>
+</div>
+</div>
+<!-- Mobile menu -->
+<div id="mobile-menu" class="hidden md:hidden border-t border-[#30363d]/50 bg-[#0d1117]/95 backdrop-blur-xl">
+<div class="flex flex-col p-4 gap-3">
+<a class="font-inter text-sm font-medium text-[#dee3eb] hover:text-white py-2" href="#features">Features</a>
+<a class="font-inter text-sm font-medium text-[#8b949e] hover:text-white py-2" href="#security">Security</a>
+<a class="font-inter text-sm font-medium text-[#8b949e] hover:text-white py-2" href="#commands">Commands</a>
+<a class="font-inter text-sm font-medium text-[#8b949e] hover:text-white py-2" href="#config">Config</a>
+<a class="font-inter text-sm font-medium text-[#8b949e] hover:text-white py-2" href="https://github.com/nasaomar165/o2cli" target="_blank">GitHub</a>
+<a class="bg-primary-container text-on-primary-container px-4 py-2 font-inter text-sm font-medium rounded text-center mt-2" href="#quickstart">Get Started</a>
+</div>
+</div>
+</nav>
+
+<main class="pt-24">
+
+<!-- Hero Section -->
+<section class="max-w-7xl mx-auto px-6 py-stack-xl flex flex-col items-center text-center">
+<div class="font-code-md text-[15px] sm:text-xs leading-none tracking-tight text-white select-none mb-2 hidden sm:block" aria-hidden="true" style="font-size: 20px">
+<pre class="inline-block text-center" style="line-height: 1.1">
+   ▄▄▄▄▄   ▄▄▄▄▄▄▄     ▄▄▄▄▄▄▄ ▄▄▄      ▄▄▄▄▄
+▄███████▄ ▀▀▀▀████   ███▀▀▀▀▀ ███       ███
+███   ███    ▄██▀    ███      ███       ███
+███▄▄▄███  ▄███▄▄▄   ███      ███       ███
+  ▀█████▀  ████████   ▀███████ ████████ ▄███▄
+
+  
+</pre>
+</div>
+<div class="inline-flex items-center gap-2 px-3 py-1 bg-surface-container-high border border-outline-variant rounded-full mb-stack-md">
+<span class="w-2 h-2 rounded-full bg-secondary animate-pulse"></span>
+<span class="font-label-caps text-label-caps text-secondary">v0.2.0</span>
+</div>
+<h1 class="font-display-xl text-display-xl text-white mb-stack-md max-w-4xl">
+                AI-Powered CLI for <span class="text-primary-container">Your Terminal</span>
+            </h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl mb-stack-lg">
+                Convert natural language to terminal commands. Powered by local LLMs via <strong class="text-on-background">Ollama</strong> or <strong class="text-on-background">LM Studio</strong> — no cloud API needed.
+            </p>
+<!-- Terminal Hero Component -->
+<div class="w-full max-w-3xl glass-panel rounded-xl overflow-hidden mb-stack-lg glow-cyan">
+<div class="terminal-header px-4 py-2 flex items-center gap-2">
+<div class="flex gap-1.5">
+<div class="w-3 h-3 rounded-full bg-[#ff5f56]"></div>
+<div class="w-3 h-3 rounded-full bg-[#ffbd2e]"></div>
+<div class="w-3 h-3 rounded-full bg-[#27c93f]"></div>
+</div>
+<div class="flex-1 text-center font-code-md text-[12px] text-outline opacity-50">o2cli — bash</div>
+</div>
+<div class="p-6 text-left font-code-md text-code-md leading-relaxed min-h-[180px]">
+<div class="flex gap-3">
+<span class="text-secondary">$</span>
+<span class="text-white">o2cli ask "find process on port 8080" --exec</span>
+</div>
+<div class="mt-2 text-outline text-[13px]">
+<span class="text-outline">[</span><span class="text-secondary">INFO</span><span class="text-outline">]</span> Connecting to LM Studio at localhost:1234...<br/>
+<span class="text-outline">[</span><span class="text-secondary">INFO</span><span class="text-outline">]</span> Model: qwen2.5-coder-0.5b-instruct<br/>
+<span class="text-outline">[</span><span class="text-secondary">INFO</span><span class="text-outline">]</span> Security check passed: 0 danger patterns matched<br/>
+</div>
+<div class="mt-2 p-3 bg-surface-container-low rounded border border-outline-variant">
+<span class="text-outline text-[11px]">Generated command:</span><br/>
+<span class="text-primary">lsof -i :8080</span>
+</div>
+<div class="mt-2 text-outline text-[13px]">
+<span class="text-outline">[</span><span class="text-secondary">SUCCESS</span><span class="text-outline">]</span> Command executed. 1 process found.
+</div>
+<div class="mt-3 flex gap-3 animate-pulse">
+<span class="text-secondary">$</span>
+<span class="w-2 h-5 bg-primary-container"></span>
+</div>
+</div>
+</div>
+<!-- Install Command -->
+<div class="flex items-center gap-stack-md p-1 pl-4 bg-surface-container-lowest border border-outline-variant rounded-lg group">
+<code class="font-code-md text-on-surface text-sm">git clone https://github.com/nasaomar165/o2cli && cd o2cli && python o2cli.py --version</code>
+<button onclick="copyInstall()" id="copy-install-btn" class="bg-surface-variant hover:bg-surface-container-high p-2 rounded transition-colors" title="Copy to clipboard">
+<span class="material-symbols-outlined text-sm" data-icon="content_copy">content_copy</span>
+</button>
+</div>
+<!-- Requirements -->
+<div class="mt-stack-md flex flex-wrap justify-center gap-3 text-[12px] text-outline">
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-sm" data-icon="check">check</span> Python 3.10+</span>
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-sm" data-icon="check">check</span> Ollama or LM Studio</span>
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-sm" data-icon="check">check</span> Auto-deps install</span>
+</div>
+</section>
+
+<!-- Bento Box Features -->
+<section id="features" class="max-w-7xl mx-auto px-6 py-stack-xl">
+<div class="text-center mb-stack-lg">
+<h2 class="font-headline-lg text-headline-lg text-white mb-stack-sm">Built for engineers who value <span class="text-secondary">safety</span> and <span class="text-primary">speed</span>.</h2>
+<p class="font-body-lg text-on-surface-variant max-w-xl mx-auto">Every feature is designed with defense-in-depth. No data leaves your machine.</p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-12 gap-gutter">
+<div class="md:col-span-8 glass-panel p-8 rounded-xl flex flex-col justify-between group hover:border-primary-container transition-colors">
+<div>
+<div class="w-12 h-12 bg-primary-container/10 rounded flex items-center justify-center mb-stack-md text-primary-container">
+<span class="material-symbols-outlined" data-icon="psychology">psychology</span>
+</div>
+<h3 class="font-headline-md text-headline-md text-white mb-stack-sm">Natural Language to Commands</h3>
+<p class="font-body-md text-on-surface-variant max-w-lg">
+                            Describe what you want in plain English — O2Cli generates the exact terminal command with a plain-language explanation. Supports multi-step tasks with per-step confirmation.
+                        </p>
+</div>
+<div class="mt-stack-lg flex gap-2 overflow-hidden opacity-50 group-hover:opacity-100 transition-opacity flex-wrap">
+<span class="cmd-badge bg-surface-container border border-outline-variant">ask "list python files"</span>
+<span class="cmd-badge bg-surface-container border border-outline-variant">--exec</span>
+<span class="cmd-badge bg-surface-container border border-outline-variant">--dry-run</span>
+<span class="cmd-badge bg-surface-container border border-outline-variant">--copy</span>
+</div>
+</div>
+<div class="md:col-span-4 glass-panel p-8 rounded-xl flex flex-col justify-between hover:border-secondary/50 transition-colors">
+<div>
+<div class="w-12 h-12 bg-secondary/10 rounded flex items-center justify-center mb-stack-md text-secondary">
+<span class="material-symbols-outlined" data-icon="lock">lock</span>
+</div>
+<h3 class="font-headline-md text-headline-md text-white mb-stack-sm">100% Local</h3>
+<p class="font-body-md text-on-surface-variant">
+                            Works with Ollama or LM Studio on your machine. Zero data leaves your computer. No cloud API keys.
+                        </p>
+</div>
+<div class="mt-stack-md flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-secondary animate-pulse"></span>
+<span class="text-[11px] font-code-md text-secondary">localhost only</span>
+</div>
+</div>
+<div class="md:col-span-4 glass-panel p-8 rounded-xl flex flex-col justify-between hover:border-primary-container transition-colors">
+<div>
+<div class="w-12 h-12 bg-tertiary/10 rounded flex items-center justify-center mb-stack-md text-tertiary">
+<span class="material-symbols-outlined" data-icon="chat">chat</span>
+</div>
+<h3 class="font-headline-md text-headline-md text-white mb-stack-sm">Interactive Chat</h3>
+<p class="font-body-md text-on-surface-variant">
+                            Full conversational mode with slash commands: <code class="text-primary text-xs bg-primary-container/10 px-1 rounded">/ask</code> <code class="text-primary text-xs bg-primary-container/10 px-1 rounded">/run</code> <code class="text-primary text-xs bg-primary-container/10 px-1 rounded">/clear</code> <code class="text-primary text-xs bg-primary-container/10 px-1 rounded">/exit</code>
+                        </p>
+</div>
+</div>
+<div class="md:col-span-8 glass-panel p-8 rounded-xl flex flex-col justify-between hover:border-primary-container transition-colors">
+<div>
+<div class="w-12 h-12 bg-primary-container/10 rounded flex items-center justify-center mb-stack-md text-primary-container">
+<span class="material-symbols-outlined" data-icon="shield">shield</span>
+</div>
+<h3 class="font-headline-md text-headline-md text-white mb-stack-sm">Safety-First Design</h3>
+<p class="font-body-md text-on-surface-variant">
+                            Multi-layered security: static danger detection (30+ patterns), SSRF protection, positive-allowlist validation, shell metacharacter blocking, per-session LLM call budgets, and safe undo. Every mitigation is traceable by ID.
+                        </p>
+</div>
+<div class="mt-stack-lg flex flex-wrap gap-2">
+<span class="danger-tag bg-error-container/20 text-error border border-error-container/30">C-01 shell=False</span>
+<span class="danger-tag bg-error-container/20 text-error border border-error-container/30">H-01 Allowlist</span>
+<span class="danger-tag bg-error-container/20 text-error border border-error-container/30">H-02 SSRF</span>
+<span class="danger-tag bg-error-container/20 text-error border border-error-container/30">M-02 Safe Undo</span>
+<span class="danger-tag bg-secondary-container/15 text-secondary border border-secondary/20">M-01 0600 perms</span>
+</div>
+</div>
+<div class="md:col-span-4 glass-panel p-8 rounded-xl flex flex-col justify-between hover:border-primary-container transition-colors">
+<div>
+<div class="w-12 h-12 bg-primary-container/10 rounded flex items-center justify-center mb-stack-md text-primary-container">
+<span class="material-symbols-outlined" data-icon="swap_horiz">swap_horiz</span>
+</div>
+<h3 class="font-headline-md text-headline-md text-white mb-stack-sm">Profiles & Aliases</h3>
+<p class="font-body-md text-on-surface-variant">
+                            Switch between Ollama and LM Studio backends on the fly. Save frequent tasks as named aliases with template variables.
+                        </p>
+</div>
+</div>
+<div class="md:col-span-4 glass-panel p-8 rounded-xl flex flex-col justify-between hover:border-primary-container transition-colors">
+<div>
+<div class="w-12 h-12 bg-primary-container/10 rounded flex items-center justify-center mb-stack-md text-primary-container">
+<span class="material-symbols-outlined" data-icon="build">build</span>
+</div>
+<h3 class="font-headline-md text-headline-md text-white mb-stack-sm">Auto-Fix on Failure</h3>
+<p class="font-body-md text-on-surface-variant">
+                            When a command fails, O2Cli asks the LLM to suggest a corrected version automatically.
+                        </p>
+</div>
+</div>
+<div class="md:col-span-4 glass-panel p-8 rounded-xl flex flex-col justify-between hover:border-primary-container transition-colors">
+<div>
+<div class="w-12 h-12 bg-primary-container/10 rounded flex items-center justify-center mb-stack-md text-primary-container">
+<span class="material-symbols-outlined" data-icon="history">history</span>
+</div>
+<h3 class="font-headline-md text-headline-md text-white mb-stack-sm">Command History</h3>
+<p class="font-body-md text-on-surface-variant">
+                            Searchable, star-able, exportable (JSON/CSV) history with usage statistics and privacy controls.
+                        </p>
+</div>
+</div>
+</div>
+</section>
+
+<!-- Security Deep-Dive Section -->
+<section id="security" class="border-y border-[#30363d]/50 bg-surface-container-lowest py-stack-xl relative overflow-hidden">
+<div class="absolute inset-0 bg-primary-container/[0.03] blur-3xl -z-10"></div>
+<div class="max-w-7xl mx-auto px-6">
+<div class="text-center mb-stack-lg">
+<div class="inline-flex items-center gap-2 px-3 py-1 bg-error-container/10 border border-error-container/20 rounded-full mb-stack-md">
+<span class="material-symbols-outlined text-error text-sm" data-icon="shield">shield</span>
+<span class="font-label-caps text-label-caps text-error">SECURITY HARDEDNING — v0.2.0</span>
+</div>
+<h2 class="font-headline-lg text-headline-lg text-white mb-stack-sm">Every command passes through 5 validation layers</h2>
+<p class="font-body-lg text-on-surface-variant max-w-2xl mx-auto">Defense-in-depth: if one layer fails, the next catches it. All mitigations tagged with traceable IDs.</p>
+</div>
+
+<div class="max-w-3xl mx-auto">
+<div class="relative">
+<div class="absolute left-6 top-0 bottom-0 w-px bg-gradient-to-b from-primary-container via-primary-container/40 to-transparent hidden md:block"></div>
+
+<div class="pipeline-step flex gap-6 mb-8">
+<div class="flex-shrink-0 w-12 h-12 rounded bg-primary-container/15 border border-primary-container/30 flex items-center justify-center font-code-md text-primary text-sm font-bold z-10">1</div>
+<div class="glass-panel p-5 rounded flex-1">
+<div class="flex items-center gap-2 mb-2">
+<h4 class="font-headline-md text-white text-sm">Parse & Validate</h4>
+<span class="danger-tag bg-primary-container/15 text-primary border border-primary-container/30">H-01</span>
+<span class="danger-tag bg-primary-container/15 text-primary border border-primary-container/30">M-04</span>
+</div>
+<p class="font-body-md text-on-surface-variant text-sm">Strip markdown and prompt markers. Enforce <code class="text-primary bg-primary-container/10 px-1 rounded">MAX_CMD_LENGTH</code> (4096). Check against <code class="text-primary bg-primary-container/10 px-1 rounded">_SAFE_COMMANDS</code> positive allowlist. Detect shell metacharacters.</p>
+</div>
+</div>
+
+<div class="pipeline-step flex gap-6 mb-8">
+<div class="flex-shrink-0 w-12 h-12 rounded bg-primary-container/15 border border-primary-container/30 flex items-center justify-center font-code-md text-primary text-sm font-bold z-10">2</div>
+<div class="glass-panel p-5 rounded flex-1">
+<div class="flex items-center gap-2 mb-2">
+<h4 class="font-headline-md text-white text-sm">Allowlist Check</h4>
+<span class="danger-tag bg-primary-container/15 text-primary border border-primary-container/30">M-08</span>
+</div>
+<p class="font-body-md text-on-surface-variant text-sm">Match against user-defined patterns using anchored regex. Reject overly permissive patterns like <code class="text-error bg-error-container/10 px-1 rounded">*</code>. Commands matching allowlist but containing metacharacters are still flagged.</p>
+</div>
+</div>
+
+<div class="pipeline-step flex gap-6 mb-8">
+<div class="flex-shrink-0 w-12 h-12 rounded bg-error-container/15 border border-error-container/30 flex items-center justify-center font-code-md text-error text-sm font-bold z-10">3</div>
+<div class="glass-panel p-5 rounded flex-1">
+<div class="flex items-center gap-2 mb-2">
+<h4 class="font-headline-md text-white text-sm">Static Danger Detection</h4>
+<span class="danger-tag bg-error-container/15 text-error border border-error-container/30">30+ patterns</span>
+</div>
+<div class="font-body-md text-on-surface-variant text-sm mb-3">Regex-based detection across 10 categories:</div>
+<div class="flex flex-wrap gap-2">
+<span class="danger-tag bg-error-container/10 text-error/80 border border-error-container/20">rm -rf /</span>
+<span class="danger-tag bg-error-container/10 text-error/80 border border-error-container/20">fork bombs</span>
+<span class="danger-tag bg-error-container/10 text-error/80 border border-error-container/20">mkfs / dd</span>
+<span class="danger-tag bg-error-container/10 text-error/80 border border-error-container/20">shutdown</span>
+<span class="danger-tag bg-error-container/10 text-error/80 border border-error-container/20">curl | sh</span>
+<span class="danger-tag bg-error-container/10 text-error/80 border border-error-container/20">sudo chmod 777</span>
+<span class="danger-tag bg-error-container/10 text-error/80 border border-error-container/20">history -c</span>
+<span class="danger-tag bg-error-container/10 text-error/80 border border-error-container/20">command injection</span>
+</div>
+</div>
+</div>
+
+<div class="pipeline-step flex gap-6 mb-8">
+<div class="flex-shrink-0 w-12 h-12 rounded bg-[#ffa657]/15 border border-[#ffa657]/30 flex items-center justify-center font-code-md text-[#ffa657] text-sm font-bold z-10">4</div>
+<div class="glass-panel p-5 rounded flex-1">
+<div class="flex items-center gap-2 mb-2">
+<h4 class="font-headline-md text-white text-sm">LLM Safety Check <span class="text-outline font-normal text-xs">(optional)</span></h4>
+<span class="danger-tag bg-[#ffa657]/15 text-[#ffa657] border border-[#ffa657]/30">--llm-safety</span>
+</div>
+<p class="font-body-md text-on-surface-variant text-sm">Ask the LLM to assess risk: <span class="text-secondary">LOW</span> / <span class="text-[#ffa657]">MEDIUM</span> / <span class="text-error">HIGH</span>. HIGH risk commands are automatically blocked.</p>
+</div>
+</div>
+
+<div class="flex gap-6">
+<div class="flex-shrink-0 w-12 h-12 rounded bg-secondary/15 border border-secondary/30 flex items-center justify-center font-code-md text-secondary text-sm font-bold z-10">5</div>
+<div class="glass-panel p-5 rounded flex-1">
+<div class="flex items-center gap-2 mb-2">
+<h4 class="font-headline-md text-white text-sm">User Confirmation</h4>
+<span class="danger-tag bg-secondary/15 text-secondary border border-secondary/30">H-04</span>
+</div>
+<p class="font-body-md text-on-surface-variant text-sm">Action menu: <kbd class="px-1.5 py-0.5 bg-surface-container border border-outline-variant rounded text-xs text-white">E</kbd>xecute / <kbd class="px-1.5 py-0.5 bg-surface-container border border-outline-variant rounded text-xs text-white">C</kbd>opy / <kbd class="px-1.5 py-0.5 bg-surface-container border border-outline-variant rounded text-xs text-white">R</kbd>etry / <kbd class="px-1.5 py-0.5 bg-surface-container border border-outline-variant rounded text-xs text-white">S</kbd>kip. Trusted directories may skip confirmation.</p>
+</div>
+</div>
+</div>
+</div>
+
+<div class="mt-stack-lg max-w-3xl mx-auto glass-panel p-5 rounded border-l-2 border-l-[#ffa657]">
+<div class="flex items-start gap-3">
+<span class="material-symbols-outlined text-[#ffa657] mt-0.5" data-icon="warning">warning</span>
+<div>
+<h4 class="font-headline-md text-white text-sm mb-1">SSRF Protection <span class="text-outline font-normal text-xs">H-02</span></h4>
+<p class="font-body-md text-on-surface-variant text-sm">URL validation blocks private/link-local IP ranges (10.x, 172.16.x, 192.168.x, 169.254.x). Internal domains (.internal, .local, metadata.google.internal) are blocked. <code class="text-secondary bg-secondary/10 px-1 rounded">localhost</code> / <code class="text-secondary bg-secondary/10 px-1 rounded">127.0.0.1</code> are explicitly allowed for local LLM backends.</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+
+<!-- Hardening Stats -->
+<section class="max-w-7xl mx-auto px-6 py-stack-lg">
+<div class="grid grid-cols-2 md:grid-cols-4 gap-gutter">
+<div class="text-center glass-panel p-6 rounded">
+<div class="font-display-xl text-3xl font-bold text-primary mb-1">20+</div>
+<div class="font-label-caps text-label-caps text-outline text-xs">SECURITY MITIGATIONS</div>
+</div>
+<div class="text-center glass-panel p-6 rounded">
+<div class="font-display-xl text-3xl font-bold text-error mb-1">30+</div>
+<div class="font-label-caps text-label-caps text-outline text-xs">DANGER PATTERNS</div>
+</div>
+<div class="text-center glass-panel p-6 rounded">
+<div class="font-display-xl text-3xl font-bold text-secondary mb-1">5</div>
+<div class="font-label-caps text-label-caps text-outline text-xs">VALIDATION LAYERS</div>
+</div>
+<div class="text-center glass-panel p-6 rounded">
+<div class="font-display-xl text-3xl font-bold text-[#ffa657] mb-1">0600</div>
+<div class="font-label-caps text-label-caps text-outline text-xs">FILE PERMISSIONS</div>
+</div>
+</div>
+</section>
+
+<!-- Commands Reference Section -->
+<section id="commands" class="max-w-7xl mx-auto px-6 py-stack-xl">
+<div class="text-center mb-stack-lg">
+<h2 class="font-headline-lg text-headline-lg text-white mb-stack-sm">Commands Reference</h2>
+<p class="font-body-lg text-on-surface-variant max-w-xl mx-auto">Eight core commands. Zero bloat.</p>
+</div>
+
+<div class="flex flex-wrap justify-center gap-2 mb-stack-lg" id="cmd-tabs">
+<button class="tab-btn active px-4 py-2 text-sm font-code-md border border-outline-variant rounded text-on-surface-variant hover:text-white" data-cmd="ask">ask</button>
+<button class="tab-btn px-4 py-2 text-sm font-code-md border border-outline-variant rounded text-on-surface-variant hover:text-white" data-cmd="chat">chat</button>
+<button class="tab-btn px-4 py-2 text-sm font-code-md border border-outline-variant rounded text-on-surface-variant hover:text-white" data-cmd="config">config</button>
+<button class="tab-btn px-4 py-2 text-sm font-code-md border border-outline-variant rounded text-on-surface-variant hover:text-white" data-cmd="history">history</button>
+<button class="tab-btn px-4 py-2 text-sm font-code-md border border-outline-variant rounded text-on-surface-variant hover:text-white" data-cmd="alias">alias</button>
+<button class="tab-btn px-4 py-2 text-sm font-code-md border border-outline-variant rounded text-on-surface-variant hover:text-white" data-cmd="check">check</button>
+<button class="tab-btn px-4 py-2 text-sm font-code-md border border-outline-variant rounded text-on-surface-variant hover:text-white" data-cmd="doctor">doctor</button>
+<button class="tab-btn px-4 py-2 text-sm font-code-md border border-outline-variant rounded text-on-surface-variant hover:text-white" data-cmd="completion">completion</button>
+</div>
+
+<div id="cmd-content">
+<div class="cmd-panel" data-cmd="ask">
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-gutter">
+<div>
+<h3 class="font-headline-md text-white mb-stack-sm">Convert natural language to a terminal command</h3>
+<p class="font-body-md text-on-surface-variant mb-stack-md">The core command. Describe what you want — O2Cli generates the exact shell command with an AI explanation. Dry run by default for safety.</p>
+<div class="space-y-2">
+<div class="flex items-center gap-2 text-sm"><code class="text-primary font-code-md bg-primary-container/10 px-2 py-0.5 rounded">--exec</code><span class="text-on-surface-variant">Execute immediately</span></div>
+<div class="flex items-center gap-2 text-sm"><code class="text-primary font-code-md bg-primary-container/10 px-2 py-0.5 rounded">--dry-run</code><span class="text-on-surface-variant">Show only, never execute</span></div>
+<div class="flex items-center gap-2 text-sm"><code class="text-primary font-code-md bg-primary-container/10 px-2 py-0.5 rounded">--copy</code><span class="text-on-surface-variant">Copy to clipboard</span></div>
+<div class="flex items-center gap-2 text-sm"><code class="text-primary font-code-md bg-primary-container/10 px-2 py-0.5 rounded">--output</code><span class="text-on-surface-variant">Raw text for piping</span></div>
+<div class="flex items-center gap-2 text-sm"><code class="text-primary font-code-md bg-primary-container/10 px-2 py-0.5 rounded">--llm-safety</code><span class="text-on-surface-variant">LLM risk assessment</span></div>
+<div class="flex items-center gap-2 text-sm"><code class="text-primary font-code-md bg-primary-container/10 px-2 py-0.5 rounded">--context</code><span class="text-on-surface-variant">git, ls, env, or text</span></div>
+</div>
+</div>
+<div class="glass-panel rounded-xl overflow-hidden">
+<div class="terminal-header px-4 py-2 flex justify-between items-center">
+<span class="font-label-caps text-[10px] tracking-widest text-outline">EXAMPLES</span>
+</div>
+<pre class="p-5 font-code-md text-code-md text-[13px] leading-relaxed overflow-x-auto"><span class="syntax-comment"># Simple query</span>
+o2cli ask <span class="syntax-string">"find all .log files over 100MB"</span>
+
+<span class="syntax-comment"># Execute with git context</span>
+o2cli ask <span class="syntax-string">"show recent commits"</span> --exec --context git
+
+<span class="syntax-comment"># Use a different model</span>
+o2cli ask <span class="syntax-string">"list docker containers"</span> -m llama3.2
+
+<span class="syntax-comment"># Template variable</span>
+o2cli ask <span class="syntax-string">"compress {file}"</span> --exec
+
+<span class="syntax-comment"># Pipe output</span>
+o2cli ask <span class="syntax-string">"find my IP address"</span> --output</pre>
+</div>
+</div>
+</div>
+
+<div class="cmd-panel hidden" data-cmd="chat">
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-gutter">
+<div>
+<h3 class="font-headline-md text-white mb-stack-sm">Interactive AI chat session</h3>
+<p class="font-body-md text-on-surface-variant mb-stack-md">Full conversational mode with slash commands. Save and load sessions for continuity.</p>
+<div class="space-y-2 mb-stack-md">
+<div class="flex items-center gap-2 text-sm"><code class="text-primary font-code-md bg-primary-container/10 px-2 py-0.5 rounded">--save</code><span class="text-on-surface-variant">Save session on exit</span></div>
+<div class="flex items-center gap-2 text-sm"><code class="text-primary font-code-md bg-primary-container/10 px-2 py-0.5 rounded">--load</code><span class="text-on-surface-variant">Load saved session</span></div>
+<div class="flex items-center gap-2 text-sm"><code class="text-primary font-code-md bg-primary-container/10 px-2 py-0.5 rounded">--model</code><span class="text-on-surface-variant">Override LLM model</span></div>
+</div>
+<h4 class="font-headline-md text-white text-sm mb-2">Slash Commands</h4>
+<div class="space-y-1">
+<div class="flex items-center gap-3 text-sm"><code class="text-secondary font-code-md w-20">/ask</code><span class="text-on-surface-variant">Generate and optionally run a command</span></div>
+<div class="flex items-center gap-3 text-sm"><code class="text-secondary font-code-md w-20">/run</code><span class="text-on-surface-variant">Execute a command (requires confirmation)</span></div>
+<div class="flex items-center gap-3 text-sm"><code class="text-secondary font-code-md w-20">/clear</code><span class="text-on-surface-variant">Reset conversation history</span></div>
+<div class="flex items-center gap-3 text-sm"><code class="text-secondary font-code-md w-20">/exit</code><span class="text-on-surface-variant">Exit chat</span></div>
+</div>
+</div>
+<div class="glass-panel rounded-xl overflow-hidden">
+<div class="terminal-header px-4 py-2 flex justify-between items-center">
+<span class="font-label-caps text-[10px] tracking-widest text-outline">CHAT SESSION</span>
+</div>
+<div class="p-5 font-code-md text-code-md text-[13px] leading-relaxed">
+<div class="text-outline mb-2">O2Cli chat started. Type /exit to quit.</div>
+<div class="flex gap-2 mb-1"><span class="text-primary">you:</span></div>
+<div class="text-white mb-3 pl-4">/ask show disk usage</div>
+<div class="flex gap-2 mb-1"><span class="text-secondary">o2cli:</span></div>
+<div class="text-on-surface-variant pl-4 mb-1">Command: <span class="text-primary">df -h</span></div>
+<div class="text-on-surface-variant pl-4 mb-3 text-xs">Shows disk space usage in human-readable format.</div>
+<div class="flex gap-2 mb-1"><span class="text-primary">you:</span></div>
+<div class="text-white pl-4">/run df -h</div>
+<div class="text-outline mt-2 pl-4">Confirm execution? [y/N]: <span class="text-secondary animate-pulse">_</span></div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="cmd-panel hidden" data-cmd="config">
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-gutter">
+<div>
+<h3 class="font-headline-md text-white mb-stack-sm">View or change configuration</h3>
+<p class="font-body-md text-on-surface-variant mb-stack-md">Manage backend settings, shell preferences, security policies, profiles, and config bundles.</p>
+<div class="space-y-2">
+<div class="flex items-center gap-2 text-sm"><code class="text-primary font-code-md bg-primary-container/10 px-2 py-0.5 rounded">--show</code><span class="text-on-surface-variant">Display current config</span></div>
+<div class="flex items-center gap-2 text-sm"><code class="text-primary font-code-md bg-primary-container/10 px-2 py-0.5 rounded">--wizard</code><span class="text-on-surface-variant">Interactive setup</span></div>
+<div class="flex items-center gap-2 text-sm"><code class="text-primary font-code-md bg-primary-container/10 px-2 py-0.5 rounded">--allow</code><span class="text-on-surface-variant">Add allowlist pattern</span></div>
+<div class="flex items-center gap-2 text-sm"><code class="text-primary font-code-md bg-primary-container/10 px-2 py-0.5 rounded">--trust-dir</code><span class="text-on-surface-variant">Mark directory as trusted</span></div>
+<div class="flex items-center gap-2 text-sm"><code class="text-primary font-code-md bg-primary-container/10 px-2 py-0.5 rounded">--export/--import</code><span class="text-on-surface-variant">Config bundle I/O</span></div>
+</div>
+</div>
+<div class="glass-panel rounded-xl overflow-hidden">
+<div class="terminal-header px-4 py-2 flex justify-between items-center">
+<span class="font-label-caps text-[10px] tracking-widest text-outline">EXAMPLES</span>
+</div>
+<pre class="p-5 font-code-md text-code-md text-[13px] leading-relaxed overflow-x-auto"><span class="syntax-comment"># View config</span>
+o2cli config --show
+
+<span class="syntax-comment"># Set provider</span>
+o2cli config -p ollama -m llama3.2
+
+<span class="syntax-comment"># Add allowlist pattern</span>
+o2cli config --allow <span class="syntax-string">"git *"</span>
+o2cli config --allow <span class="syntax-string">"docker ps"</span>
+
+<span class="syntax-comment"># Trust a directory</span>
+o2cli config --trust-dir /home/user/projects
+
+<span class="syntax-comment"># Export/Import config bundle</span>
+o2cli config --export > backup.json
+o2cli config --import-file backup.json</pre>
+</div>
+</div>
+</div>
+
+<div class="cmd-panel hidden" data-cmd="history">
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-gutter">
+<div>
+<h3 class="font-headline-md text-white mb-stack-sm">Searchable command history</h3>
+<p class="font-body-md text-on-surface-variant mb-stack-md">View, search, star, re-run, and export your command history. All stored with 0600 permissions.</p>
+<div class="space-y-2">
+<div class="flex items-center gap-2 text-sm"><code class="text-primary font-code-md bg-primary-container/10 px-2 py-0.5 rounded">--search</code><span class="text-on-surface-variant">Filter by keyword</span></div>
+<div class="flex items-center gap-2 text-sm"><code class="text-primary font-code-md bg-primary-container/10 px-2 py-0.5 rounded">--star</code><span class="text-on-surface-variant">Toggle star on entry</span></div>
+<div class="flex items-center gap-2 text-sm"><code class="text-primary font-code-md bg-primary-container/10 px-2 py-0.5 rounded">--rerun</code><span class="text-on-surface-variant">Re-run a past command</span></div>
+<div class="flex items-center gap-2 text-sm"><code class="text-primary font-code-md bg-primary-container/10 px-2 py-0.5 rounded">--stats</code><span class="text-on-surface-variant">Usage statistics</span></div>
+<div class="flex items-center gap-2 text-sm"><code class="text-primary font-code-md bg-primary-container/10 px-2 py-0.5 rounded">--export</code><span class="text-on-surface-variant">Export as JSON or CSV</span></div>
+</div>
+</div>
+<div class="glass-panel rounded-xl overflow-hidden">
+<div class="terminal-header px-4 py-2 flex justify-between items-center">
+<span class="font-label-caps text-[10px] tracking-widest text-outline">EXAMPLES</span>
+</div>
+<pre class="p-5 font-code-md text-code-md text-[13px] leading-relaxed overflow-x-auto"><span class="syntax-comment"># View recent</span>
+o2cli history
+o2cli history -n 50
+
+<span class="syntax-comment"># Search</span>
+o2cli history --search <span class="syntax-string">"docker"</span>
+
+<span class="syntax-comment"># Star & re-run</span>
+o2cli history --star 12
+o2cli history --rerun 12
+
+<span class="syntax-comment"># Statistics</span>
+o2cli history --stats
+
+<span class="syntax-comment"># Export</span>
+o2cli history --export csv
+o2cli history --export json</pre>
+</div>
+</div>
+</div>
+
+<div class="cmd-panel hidden" data-cmd="alias">
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-gutter">
+<div>
+<h3 class="font-headline-md text-white mb-stack-sm">Task aliases with template support</h3>
+<p class="font-body-md text-on-surface-variant mb-stack-md">Save frequently-used task descriptions as named shortcuts. Template variables are filled at runtime with validated input.</p>
+<div class="space-y-1">
+<div class="flex items-center gap-3 text-sm"><code class="text-secondary font-code-md w-16">set</code><span class="text-on-surface-variant">Save a new alias</span></div>
+<div class="flex items-center gap-3 text-sm"><code class="text-secondary font-code-md w-16">run</code><span class="text-on-surface-variant">Execute a saved alias</span></div>
+<div class="flex items-center gap-3 text-sm"><code class="text-secondary font-code-md w-16">list</code><span class="text-on-surface-variant">List all aliases</span></div>
+<div class="flex items-center gap-3 text-sm"><code class="text-secondary font-code-md w-16">remove</code><span class="text-on-surface-variant">Delete an alias</span></div>
+</div>
+</div>
+<div class="glass-panel rounded-xl overflow-hidden">
+<div class="terminal-header px-4 py-2 flex justify-between items-center">
+<span class="font-label-caps text-[10px] tracking-widest text-outline">EXAMPLES</span>
+</div>
+<pre class="p-5 font-code-md text-code-md text-[13px] leading-relaxed overflow-x-auto"><span class="syntax-comment"># Set alias</span>
+o2cli alias set ports <span class="syntax-string">"list all open ports"</span>
+
+<span class="syntax-comment"># With template variable</span>
+o2cli alias set kill-port <span class="syntax-string">"find and kill process on {port}"</span>
+
+<span class="syntax-comment"># Run alias</span>
+o2cli alias run ports
+o2cli alias run kill-port --exec
+
+<span class="syntax-comment"># List & remove</span>
+o2cli alias list
+o2cli alias remove ports</pre>
+</div>
+</div>
+</div>
+
+<div class="cmd-panel hidden" data-cmd="check">
+<div class="glass-panel rounded-xl overflow-hidden max-w-2xl mx-auto">
+<div class="terminal-header px-4 py-2 flex justify-between items-center">
+<span class="font-label-caps text-[10px] tracking-widest text-outline">CHECK</span>
+</div>
+<div class="p-6 font-code-md text-code-md text-[13px] leading-relaxed">
+<p class="text-on-surface-variant mb-4">Verify connection to your configured LLM backend.</p>
+<pre class="text-white">
+<span class="text-outline">$</span> o2cli check
+<span class="text-outline">[</span><span class="text-secondary">INFO</span><span class="text-outline">]</span> Provider:    <span class="text-primary">lmstudio</span>
+<span class="text-outline">[</span><span class="text-secondary">INFO</span><span class="text-outline">]</span> Base URL:    <span class="text-primary">http://localhost:1234/v1</span>
+<span class="text-outline">[</span><span class="text-secondary">INFO</span><span class="text-outline">]</span> Model:       <span class="text-primary">qwen2.5-coder-0.5b-instruct</span>
+<span class="text-outline">[</span><span class="text-secondary">SUCCESS</span><span class="text-outline">]</span> Connection:  <span class="text-secondary">OK</span> (42ms)
+</pre>
+</div>
+</div>
+</div>
+
+<div class="cmd-panel hidden" data-cmd="doctor">
+<div class="glass-panel rounded-xl overflow-hidden max-w-2xl mx-auto">
+<div class="terminal-header px-4 py-2 flex justify-between items-center">
+<span class="font-label-caps text-[10px] tracking-widest text-outline">DOCTOR</span>
+</div>
+<div class="p-6 font-code-md text-code-md text-[13px] leading-relaxed">
+<p class="text-on-surface-variant mb-4">Full diagnostic checklist:</p>
+<div class="space-y-1.5">
+<div class="flex items-center gap-2"><span class="text-secondary">✓</span> Python version (3.10+)</div>
+<div class="flex items-center gap-2"><span class="text-secondary">✓</span> Dependencies (httpx, click, rich, pydantic, pyperclip)</div>
+<div class="flex items-center gap-2"><span class="text-secondary">✓</span> Configuration file (.o2cli/config.json)</div>
+<div class="flex items-center gap-2"><span class="text-secondary">✓</span> File permissions (0600)</div>
+<div class="flex items-center gap-2"><span class="text-secondary">✓</span> Backend connectivity</div>
+<div class="flex items-center gap-2"><span class="text-secondary">✓</span> Model configuration</div>
+<div class="flex items-center gap-2"><span class="text-secondary">✓</span> Clipboard availability</div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="cmd-panel hidden" data-cmd="completion">
+<div class="glass-panel rounded-xl overflow-hidden max-w-2xl mx-auto">
+<div class="terminal-header px-4 py-2 flex justify-between items-center">
+<span class="font-label-caps text-[10px] tracking-widest text-outline">COMPLETION</span>
+</div>
+<pre class="p-5 font-code-md text-code-md text-[13px] leading-relaxed overflow-x-auto"><span class="syntax-comment"># Bash</span>
+eval <span class="syntax-string">"$(o2cli completion bash)"</span>
+
+<span class="syntax-comment"># Zsh</span>
+eval <span class="syntax-string">"$(o2cli completion zsh)"</span>
+
+<span class="syntax-comment"># Fish</span>
+o2cli completion fish | source</pre>
+</div>
+</div>
+
+</div>
+</section>
+
+<!-- Template Variables + Config Section -->
+<section id="config" class="max-w-7xl mx-auto px-6 py-stack-xl">
+<div class="flex flex-col lg:flex-row items-center gap-stack-xl">
+<div class="lg:w-1/2">
+<h2 class="font-headline-lg text-headline-lg text-white mb-stack-md">Template variables. <br/><span class="text-primary-container">Validated input.</span></h2>
+<p class="font-body-lg text-on-surface-variant mb-stack-lg">
+                        Use <code class="text-primary bg-primary-container/10 px-1.5 py-0.5 rounded font-code-md text-sm">{variable}</code> in your task descriptions. O2Cli prompts you at runtime and validates every value against a strict character allowlist before substitution.
+                    </p>
+<div class="space-y-stack-md mb-stack-lg">
+<div class="flex items-start gap-stack-md">
+<span class="material-symbols-outlined text-secondary mt-1" data-icon="check_circle">check_circle</span>
+<span class="font-body-md text-on-background">Allowed: <code class="text-xs font-code-md bg-surface-container px-1 rounded">a-z A-Z 0-9 _ . / : - @</code></span>
+</div>
+<div class="flex items-start gap-stack-md">
+<span class="material-symbols-outlined text-secondary mt-1" data-icon="check_circle">check_circle</span>
+<span class="font-body-md text-on-background">Disallowed chars are auto-escaped with <code class="text-xs font-code-md bg-surface-container px-1 rounded">shlex.quote()</code></span>
+</div>
+<div class="flex items-start gap-stack-md">
+<span class="material-symbols-outlined text-[#ffa657] mt-1" data-icon="warning">warning</span>
+<span class="font-body-md text-on-background">Empty values trigger a warning</span>
+</div>
+</div>
+<h3 class="font-headline-md text-white mb-stack-sm">Safe Undo</h3>
+<p class="font-body-md text-on-surface-variant">When a command succeeds, O2Cli suggests an undo that moves files to <code class="text-xs font-code-md bg-surface-container px-1 rounded">.o2cli/trash/</code> instead of <code class="text-xs font-code-md bg-error-container/10 text-error px-1 rounded">rm -rf</code>.</p>
+</div>
+<div class="lg:w-1/2 w-full space-y-gutter">
+<div class="glass-panel rounded-xl overflow-hidden">
+<div class="terminal-header px-4 py-2 flex justify-between items-center">
+<span class="font-label-caps text-[10px] tracking-widest text-outline">TEMPLATE VARIABLES</span>
+</div>
+<div class="p-5 font-code-md text-code-md text-[13px] leading-relaxed">
+<div class="text-outline mb-2"><span class="text-secondary">$</span> o2cli ask <span class="syntax-string">"compress {file}"</span> --exec</div>
+<div class="text-outline mb-1">Prompt: file = <span class="text-white">mydata.tar</span></div>
+<div class="text-outline mb-3">Result:  <span class="text-primary">tar -czf mydata.tar.gz mydata.tar</span></div>
+<div class="border-t border-outline-variant pt-3 mt-3">
+<div class="text-outline mb-2"><span class="text-secondary">$</span> o2cli ask <span class="syntax-string">"find process on {port}"</span> --exec</div>
+<div class="text-outline mb-1">Prompt: port = <span class="text-white">8080</span></div>
+<div class="text-outline">Result:  <span class="text-primary">lsof -i :8080</span></div>
+</div>
+</div>
+</div>
+<div class="glass-panel rounded-xl overflow-hidden">
+<div class="terminal-header px-4 py-2 flex justify-between items-center">
+<span class="font-label-caps text-[10px] tracking-widest text-outline">SAFE UNDO</span>
+</div>
+<div class="p-5 font-code-md text-[13px]">
+<div class="grid grid-cols-2 gap-3">
+<div>
+<div class="text-outline text-[10px] mb-1">ORIGINAL</div>
+<div class="text-white">mv src dest</div>
+<div class="text-white mt-2">mkdir mydir</div>
+<div class="text-white mt-2">touch newfile</div>
+<div class="text-white mt-2">cp src dest</div>
+</div>
+<div>
+<div class="text-outline text-[10px] mb-1">UNDO</div>
+<div class="text-secondary">mv dest src</div>
+<div class="text-secondary mt-2">mv mydir .o2cli/trash/</div>
+<div class="text-secondary mt-2">mv newfile .o2cli/trash/</div>
+<div class="text-secondary mt-2">mv dest .o2cli/trash/</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+
+<!-- Config File Section -->
+<section class="border-y border-[#30363d]/50 bg-surface-container-lowest py-stack-xl">
+<div class="max-w-7xl mx-auto px-6">
+<div class="flex flex-col lg:flex-row items-center gap-stack-xl">
+<div class="lg:w-1/2">
+<h2 class="font-headline-lg text-headline-lg text-white mb-stack-md">Configuration. <br/>Minimal and secure.</h2>
+<p class="font-body-lg text-on-surface-variant mb-stack-md">
+                        Stored in <code class="text-primary bg-primary-container/10 px-1.5 py-0.5 rounded font-code-md text-sm">.o2cli/config.json</code>. All files created with <code class="text-secondary bg-secondary/10 px-1.5 py-0.5 rounded font-code-md text-sm">0600</code> permissions. Environment variables override config values.
+                    </p>
+<div class="space-y-2 mb-stack-md">
+<h4 class="font-label-caps text-label-caps text-outline text-xs">ENVIRONMENT VARIABLES</h4>
+<div class="flex items-center gap-3 text-sm"><code class="text-primary font-code-md bg-primary-container/10 px-2 py-0.5 rounded w-40">O2CLI_MODEL</code><span class="text-on-surface-variant">Override LLM model</span></div>
+<div class="flex items-center gap-3 text-sm"><code class="text-primary font-code-md bg-primary-container/10 px-2 py-0.5 rounded w-40">O2CLI_PROVIDER</code><span class="text-on-surface-variant">ollama or lmstudio</span></div>
+<div class="flex items-center gap-3 text-sm"><code class="text-primary font-code-md bg-primary-container/10 px-2 py-0.5 rounded w-40">O2CLI_BASE_URL</code><span class="text-on-surface-variant">Backend URL (SSRF validated)</span></div>
+<div class="flex items-center gap-3 text-sm"><code class="text-primary font-code-md bg-primary-container/10 px-2 py-0.5 rounded w-40">O2CLI_DEBUG</code><span class="text-on-surface-variant">Enable debug logging</span></div>
+</div>
+<div class="p-3 bg-surface-container border border-outline-variant rounded">
+<code class="font-code-md text-xs text-on-surface-variant">O2CLI_MODEL=llama3.2 O2CLI_PROVIDER=ollama o2cli ask "list files"</code>
+</div>
+</div>
+<div class="lg:w-1/2 w-full">
+<div class="glass-panel rounded-xl overflow-hidden">
+<div class="terminal-header px-4 py-2 flex justify-between items-center">
+<span class="font-label-caps text-[10px] tracking-widest text-outline">.O2CLI/CONFIG.JSON</span>
+</div>
+<pre class="p-5 font-code-md text-code-md text-[13px] leading-relaxed overflow-x-auto"><span class="syntax-keyword">{</span>
+  <span class="syntax-string">"backend"</span>: <span class="syntax-keyword">{</span>
+    <span class="syntax-string">"provider"</span>: <span class="syntax-string">"lmstudio"</span>,
+    <span class="syntax-string">"base_url"</span>: <span class="syntax-string">"http://localhost:1234/v1"</span>,
+    <span class="syntax-string">"model"</span>: <span class="syntax-string">"qwen2.5-coder-0.5b-instruct"</span>,
+    <span class="syntax-string">"api_key"</span>: <span class="syntax-string">"not-needed"</span>,
+    <span class="syntax-string">"temperature"</span>: <span class="syntax-number">0.1</span>,
+    <span class="syntax-string">"max_tokens"</span>: <span class="syntax-number">512</span>,
+    <span class="syntax-string">"timeout"</span>: <span class="syntax-number">30.0</span>
+  <span class="syntax-keyword">}</span>,
+  <span class="syntax-string">"shell"</span>: <span class="syntax-keyword">{</span>
+    <span class="syntax-string">"preferred_shell"</span>: <span class="syntax-string">"auto"</span>,
+    <span class="syntax-string">"confirm_before_execute"</span>: <span class="syntax-bool">true</span>,
+    <span class="syntax-string">"explain_commands"</span>: <span class="syntax-bool">true</span>,
+    <span class="syntax-string">"no_history"</span>: <span class="syntax-bool">false</span>
+  <span class="syntax-keyword">}</span>,
+  <span class="syntax-string">"active_profile"</span>: <span class="syntax-string">"default"</span>
+<span class="syntax-keyword">}</span></pre>
+</div>
+</div>
+</div>
+</section>
+
+<!-- Quick Start Section -->
+<section id="quickstart" class="max-w-7xl mx-auto px-6 py-stack-xl">
+<div class="text-center mb-stack-lg">
+<h2 class="font-headline-lg text-headline-lg text-white mb-stack-sm">Quick Start</h2>
+<p class="font-body-lg text-on-surface-variant max-w-xl mx-auto">Up and running in under a minute. Dependencies auto-install on first run.</p>
+</div>
+<div class="max-w-3xl mx-auto">
+<div class="glass-panel rounded-xl overflow-hidden glow-cyan">
+<div class="terminal-header px-4 py-2 flex items-center gap-2">
+<div class="flex gap-1.5">
+<div class="w-3 h-3 rounded-full bg-[#ff5f56]"></div>
+<div class="w-3 h-3 rounded-full bg-[#ffbd2e]"></div>
+<div class="w-3 h-3 rounded-full bg-[#27c93f]"></div>
+</div>
+<div class="flex-1 text-center font-code-md text-[12px] text-outline opacity-50">o2cli — quickstart</div>
+</div>
+<pre class="p-6 font-code-md text-code-md text-[13px] leading-loose overflow-x-auto"><span class="syntax-comment"># 1. Clone and enter the repo</span>
+<span class="text-white">git clone https://github.com/nasaomar165/o2cli && cd o2cli</span>
+
+<span class="syntax-comment"># 2. Make executable (optional)</span>
+<span class="text-white">chmod +x o2cli.py</span>
+
+<span class="syntax-comment"># 3. First run — interactive setup wizard</span>
+<span class="text-white">python o2cli.py</span>
+
+<span class="syntax-comment"># 4. Generate a command (dry run by default)</span>
+<span class="text-white">python o2cli.py ask <span class="syntax-string">"list all python files in this directory"</span></span>
+
+<span class="syntax-comment"># 5. Generate and execute</span>
+<span class="text-white">python o2cli.py ask <span class="syntax-string">"find process on port 8080"</span> --exec</span>
+
+<span class="syntax-comment"># 6. Interactive chat</span>
+<span class="text-white">python o2cli.py chat</span></pre>
+</div>
+</div>
+</section>
+
+<!-- Architecture Section -->
+<section class="max-w-7xl mx-auto px-6 py-stack-xl">
+<div class="text-center mb-stack-lg">
+<h2 class="font-headline-lg text-headline-lg text-white mb-stack-sm">Architecture</h2>
+<p class="font-body-lg text-on-surface-variant max-w-xl mx-auto">Three-layer design with local-first principles and defense-in-depth.</p>
+</div>
+<div class="max-w-4xl mx-auto space-y-gutter">
+    <div class="glass-panel rounded-xl overflow-hidden border-t-2 border-t-primary">
+        <div class="px-6 py-4 bg-primary-container/5 border-b border-outline-variant flex items-center gap-3">
+            <div class="w-8 h-8 bg-primary-container/15 rounded flex items-center justify-center">
+                <span class="material-symbols-outlined text-primary text-lg" data-icon="terminal">terminal</span>
+            </div>
+            <div>
+                <h3 class="font-headline-md text-white text-sm">CLI Layer</h3>
+                <p class="text-outline text-xs font-code-md">Click command group</p>
+            </div>
+        </div>
+        <div class="px-6 py-4 flex flex-wrap gap-2">
+            <span class="cmd-badge bg-surface-container border border-outline-variant text-on-surface-variant">ask</span>
+            <span class="cmd-badge bg-surface-container border border-outline-variant text-on-surface-variant">chat</span>
+            <span class="cmd-badge bg-surface-container border border-outline-variant text-on-surface-variant">config</span>
+            <span class="cmd-badge bg-surface-container border border-outline-variant text-on-surface-variant">check</span>
+            <span class="cmd-badge bg-surface-container border border-outline-variant text-on-surface-variant">doctor</span>
+            <span class="cmd-badge bg-surface-container border border-outline-variant text-on-surface-variant">history</span>
+            <span class="cmd-badge bg-surface-container border border-outline-variant text-on-surface-variant">alias</span>
+            <span class="cmd-badge bg-surface-container border border-outline-variant text-on-surface-variant">completion</span>
+        </div>
+    </div>
+    <div class="flex justify-center"><div class="w-px h-8 bg-gradient-to-b from-primary-container/50 to-transparent"></div></div>
+    <div class="glass-panel rounded-xl overflow-hidden border-t-2 border-t-primary">
+        <div class="px-6 py-4 bg-primary-container/5 border-b border-outline-variant flex items-center gap-3">
+            <div class="w-8 h-8 bg-primary-container/15 rounded flex items-center justify-center">
+                <span class="material-symbols-outlined text-primary text-lg" data-icon="settings_suggest">settings_suggest</span>
+            </div>
+            <div><h3 class="font-headline-md text-white text-sm">Core Engine</h3></div>
+        </div>
+        <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-gutter">
+            <div class="bg-surface-container-low rounded-lg p-5 border border-outline-variant">
+                <div class="flex items-center gap-2 mb-4">
+                    <div class="w-7 h-7 bg-secondary/10 rounded flex items-center justify-center"><span class="material-symbols-outlined text-secondary text-sm" data-icon="psychology">psychology</span></div>
+                    <h4 class="font-headline-md text-white text-sm">LLM Engine</h4>
+                </div>
+                <ul class="space-y-2">
+                    <li class="flex items-center gap-2 text-sm text-on-surface-variant"><span class="w-1 h-1 rounded-full bg-secondary flex-shrink-0"></span>generate</li>
+                    <li class="flex items-center gap-2 text-sm text-on-surface-variant"><span class="w-1 h-1 rounded-full bg-secondary flex-shrink-0"></span>refine</li>
+                    <li class="flex items-center gap-2 text-sm text-on-surface-variant"><span class="w-1 h-1 rounded-full bg-secondary flex-shrink-0"></span>fix</li>
+                    <li class="flex items-center gap-2 text-sm text-on-surface-variant"><span class="w-1 h-1 rounded-full bg-secondary flex-shrink-0"></span>explain</li>
+                    <li class="flex items-center gap-2 text-sm text-on-surface-variant"><span class="w-1 h-1 rounded-full bg-secondary flex-shrink-0"></span>safety</li>
+                </ul>
+            </div>
+            <div class="bg-surface-container-low rounded-lg p-5 border border-outline-variant">
+                <div class="flex items-center gap-2 mb-4">
+                    <div class="w-7 h-7 bg-error/10 rounded flex items-center justify-center"><span class="material-symbols-outlined text-error text-sm" data-icon="shield">shield</span></div>
+                    <h4 class="font-headline-md text-white text-sm">Security Pipeline</h4>
+                </div>
+                <ul class="space-y-2">
+                    <li class="flex items-center gap-2 text-sm text-on-surface-variant"><span class="w-1 h-1 rounded-full bg-error flex-shrink-0"></span>allowlist check</li>
+                    <li class="flex items-center gap-2 text-sm text-on-surface-variant"><span class="w-1 h-1 rounded-full bg-error flex-shrink-0"></span>danger patterns</li>
+                    <li class="flex items-center gap-2 text-sm text-on-surface-variant"><span class="w-1 h-1 rounded-full bg-error flex-shrink-0"></span>SSRF validation</li>
+                    <li class="flex items-center gap-2 text-sm text-on-surface-variant"><span class="w-1 h-1 rounded-full bg-error flex-shrink-0"></span>template quoting</li>
+                    <li class="flex items-center gap-2 text-sm text-on-surface-variant"><span class="w-1 h-1 rounded-full bg-error flex-shrink-0"></span>command parser</li>
+                </ul>
+            </div>
+        </div>
+        <div class="px-6 pb-6">
+            <div class="bg-surface-container-low rounded-lg p-5 border border-[#ffa657]/20">
+                <div class="flex items-center gap-2 mb-4">
+                    <div class="w-7 h-7 bg-[#ffa657]/10 rounded flex items-center justify-center"><span class="material-symbols-outlined text-[#ffa657] text-sm" data-icon="play_arrow">play_arrow</span></div>
+                    <h4 class="font-headline-md text-white text-sm">Execution Layer</h4>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
+                    <div class="flex items-center gap-2 text-sm text-on-surface-variant"><span class="w-1 h-1 rounded-full bg-[#ffa657] flex-shrink-0"></span><code class="text-xs bg-surface-container px-1.5 py-0.5 rounded text-primary">shell=False</code><span>(subprocess)</span></div>
+                    <div class="flex items-center gap-2 text-sm text-on-surface-variant"><span class="w-1 h-1 rounded-full bg-[#ffa657] flex-shrink-0"></span><code class="text-xs bg-surface-container px-1.5 py-0.5 rounded text-primary">shlex.split()</code><span>arg parsing</span></div>
+                    <div class="flex items-center gap-2 text-sm text-on-surface-variant"><span class="w-1 h-1 rounded-full bg-[#ffa657] flex-shrink-0"></span>Streaming output</div>
+                    <div class="flex items-center gap-2 text-sm text-on-surface-variant"><span class="w-1 h-1 rounded-full bg-[#ffa657] flex-shrink-0"></span>Multi-step per-step checks</div>
+                    <div class="flex items-center gap-2 text-sm text-on-surface-variant sm:col-span-2"><span class="w-1 h-1 rounded-full bg-[#ffa657] flex-shrink-0"></span>Safe undo suggestions</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="flex justify-center"><div class="w-px h-8 bg-gradient-to-b from-secondary/50 to-transparent"></div></div>
+    <div class="glass-panel rounded-xl overflow-hidden border-t-2 border-t-secondary">
+        <div class="px-6 py-4 bg-secondary/5 border-b border-outline-variant flex items-center gap-3">
+            <div class="w-8 h-8 bg-secondary/10 rounded flex items-center justify-center"><span class="material-symbols-outlined text-secondary text-lg" data-icon="storage">storage</span></div>
+            <div><h3 class="font-headline-md text-white text-sm">Data Layer</h3></div>
+        </div>
+        <div class="px-6 py-4">
+            <div class="flex flex-wrap gap-2 mb-3">
+                <span class="cmd-badge bg-surface-container border border-outline-variant text-on-surface-variant text-xs">config.json</span>
+                <span class="cmd-badge bg-surface-container border border-outline-variant text-on-surface-variant text-xs">history.json</span>
+                <span class="cmd-badge bg-surface-container border border-outline-variant text-on-surface-variant text-xs">aliases.json</span>
+                <span class="cmd-badge bg-surface-container border border-outline-variant text-on-surface-variant text-xs">profiles.json</span>
+                <span class="cmd-badge bg-surface-container border border-outline-variant text-on-surface-variant text-xs">security.json</span>
+                <span class="cmd-badge bg-surface-container border border-outline-variant text-on-surface-variant text-xs">sessions/</span>
+            </div>
+            <div class="flex items-center gap-2 text-sm">
+                <span class="material-symbols-outlined text-secondary text-sm" data-icon="lock">lock</span>
+                <span class="text-on-surface-variant">All files created with</span>
+                <code class="text-xs font-code-md bg-secondary/10 text-secondary px-1.5 py-0.5 rounded">0600</code>
+                <span class="text-on-surface-variant">permissions</span>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="max-w-4xl mx-auto mt-6 grid grid-cols-1 md:grid-cols-2 gap-gutter">
+<div class="glass-panel p-5 rounded"><div class="flex items-center gap-2 mb-2"><span class="material-symbols-outlined text-primary text-sm" data-icon="wifi_off">wifi_off</span><h4 class="font-headline-md text-white text-sm">Local-first</h4></div><p class="font-body-md text-on-surface-variant text-sm">No cloud APIs. All LLM inference happens on your machine via Ollama or LM Studio's OpenAI-compatible endpoints.</p></div>
+<div class="glass-panel p-5 rounded"><div class="flex items-center gap-2 mb-2"><span class="material-symbols-outlined text-primary text-sm" data-icon="layers">layers</span><h4 class="font-headline-md text-white text-sm">Defense-in-depth</h4></div><p class="font-body-md text-on-surface-variant text-sm">Multiple independent security checks. If one layer fails, the next catches it.</p></div>
+<div class="glass-panel p-5 rounded"><div class="flex items-center gap-2 mb-2"><span class="material-symbols-outlined text-primary text-sm" data-icon="verified_user">verified_user</span><h4 class="font-headline-md text-white text-sm">Positive allowlist</h4></div><p class="font-body-md text-on-surface-variant text-sm">Commands are checked against a known-safe list rather than trying to block all dangerous patterns.</p></div>
+<div class="glass-panel p-5 rounded"><div class="flex items-center gap-2 mb-2"><span class="material-symbols-outlined text-primary text-sm" data-icon="visibility">visibility</span><h4 class="font-headline-md text-white text-sm">Observable</h4></div><p class="font-body-md text-on-surface-variant text-sm">All security events logged. Environment overrides reported. Debug mode provides detailed traces.</p></div>
+</div>
+</section>
+
+<!-- Hardening Tables Section -->
+<section class="border-t border-[#30363d]/50 bg-surface-container-lowest py-stack-xl">
+<div class="max-w-7xl mx-auto px-6">
+<div class="text-center mb-stack-lg">
+<h2 class="font-headline-lg text-headline-lg text-white mb-stack-sm">Full Hardening Inventory</h2>
+<p class="font-body-lg text-on-surface-variant max-w-xl mx-auto">Every mitigation tagged with a traceable identifier for audit.</p>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-gutter">
+<div class="glass-panel rounded-xl overflow-hidden">
+<button onclick="togglePanel(this)" class="w-full px-5 py-3 border-b border-outline-variant flex items-center gap-2 hover:bg-surface-container-high/50 transition-colors">
+<span class="danger-tag bg-primary-container/15 text-primary border border-primary-container/30">C-SERIES</span>
+<span class="text-white text-sm font-headline-md">Command Execution</span>
+<span class="ml-auto text-xs text-outline font-code-md">3 items</span>
+<span class="material-symbols-outlined text-outline text-lg transition-transform duration-300 panel-arrow" style="transform:rotate(-90deg)" data-icon="expand_more">expand_more</span>
+</button>
+<div class="panel-content divide-y divide-outline-variant" style="max-height:0px;opacity:0;">
+<div class="px-5 py-3 flex gap-3"><code class="text-primary font-code-md text-xs flex-shrink-0 w-12 pt-0.5">C-01</code><div><span class="text-white text-sm font-medium">shell=True eliminated</span><p class="text-on-surface-variant text-xs mt-0.5">All subprocess calls use explicit argument lists with shell=False.</p></div></div>
+<div class="px-5 py-3 flex gap-3"><code class="text-primary font-code-md text-xs flex-shrink-0 w-12 pt-0.5">C-02</code><div><span class="text-white text-sm font-medium">Template variable quoting</span><p class="text-on-surface-variant text-xs mt-0.5">Values validated against strict allowlist and shlex.quote()'d before substitution.</p></div></div>
+<div class="px-5 py-3 flex gap-3"><code class="text-primary font-code-md text-xs flex-shrink-0 w-12 pt-0.5">C-03</code><div><span class="text-white text-sm font-medium">Multi-step validation</span><p class="text-on-surface-variant text-xs mt-0.5">Multi-step commands validated per-step with length and count limits.</p></div></div>
+</div>
+</div>
+<div class="glass-panel rounded-xl overflow-hidden">
+<button onclick="togglePanel(this)" class="w-full px-5 py-3 border-b border-outline-variant flex items-center gap-2 hover:bg-surface-container-high/50 transition-colors">
+<span class="danger-tag bg-[#ffa657]/15 text-[#ffa657] border border-[#ffa657]/30">H-SERIES</span>
+<span class="text-white text-sm font-headline-md">Hardening</span>
+<span class="ml-auto text-xs text-outline font-code-md">6 items</span>
+<span class="material-symbols-outlined text-outline text-lg transition-transform duration-300 panel-arrow" style="transform:rotate(-90deg)" data-icon="expand_more">expand_more</span>
+</button>
+<div class="panel-content divide-y divide-outline-variant" style="max-height:0px;opacity:0;">
+<div class="px-5 py-3 flex gap-3"><code class="text-[#ffa657] font-code-md text-xs flex-shrink-0 w-12 pt-0.5">H-01</code><div><span class="text-white text-sm font-medium">Positive-allowlist parser</span><p class="text-on-surface-variant text-xs mt-0.5">Replaces _clean_cmd() with _SAFE_COMMANDS set.</p></div></div>
+<div class="px-5 py-3 flex gap-3"><code class="text-[#ffa657] font-code-md text-xs flex-shrink-0 w-12 pt-0.5">H-02</code><div><span class="text-white text-sm font-medium">SSRF protection</span><p class="text-on-surface-variant text-xs mt-0.5">Blocks private/link-local IP ranges.</p></div></div>
+<div class="px-5 py-3 flex gap-3"><code class="text-[#ffa657] font-code-md text-xs flex-shrink-0 w-12 pt-0.5">H-03</code><div><span class="text-white text-sm font-medium">Env var validation</span><p class="text-on-surface-variant text-xs mt-0.5">Overrides validated and logged at WARN level.</p></div></div>
+<div class="px-5 py-3 flex gap-3"><code class="text-[#ffa657] font-code-md text-xs flex-shrink-0 w-12 pt-0.5">H-04</code><div><span class="text-white text-sm font-medium">/run confirmation</span><p class="text-on-surface-variant text-xs mt-0.5">Chat /run requires explicit user confirmation.</p></div></div>
+<div class="px-5 py-3 flex gap-3"><code class="text-[#ffa657] font-code-md text-xs flex-shrink-0 w-12 pt-0.5">H-05</code><div><span class="text-white text-sm font-medium">Config bundle validation</span><p class="text-on-surface-variant text-xs mt-0.5">Validates against JSON Schema before writing.</p></div></div>
+<div class="px-5 py-3 flex gap-3"><code class="text-[#ffa657] font-code-md text-xs flex-shrink-0 w-12 pt-0.5">H-06</code><div><span class="text-white text-sm font-medium">Safe context collection</span><p class="text-on-surface-variant text-xs mt-0.5">_collect_context() uses shell=False with validated paths.</p></div></div>
+</div>
+</div>
+<div class="glass-panel rounded-xl overflow-hidden">
+<button onclick="togglePanel(this)" class="w-full px-5 py-3 border-b border-outline-variant flex items-center gap-2 hover:bg-surface-container-high/50 transition-colors">
+<span class="danger-tag bg-secondary/15 text-secondary border border-secondary/30">M-SERIES</span>
+<span class="text-white text-sm font-headline-md">Mitigations</span>
+<span class="ml-auto text-xs text-outline font-code-md">6 items</span>
+<span class="material-symbols-outlined text-outline text-lg transition-transform duration-300 panel-arrow" style="transform:rotate(-90deg)" data-icon="expand_more">expand_more</span>
+</button>
+<div class="panel-content divide-y divide-outline-variant" style="max-height:0px;opacity:0;">
+<div class="px-5 py-3 flex gap-3"><code class="text-secondary font-code-md text-xs flex-shrink-0 w-12 pt-0.5">M-01</code><div><span class="text-white text-sm font-medium">Secure file permissions</span><p class="text-on-surface-variant text-xs mt-0.5">All files created with 0600 (owner-only) permissions.</p></div></div>
+<div class="px-5 py-3 flex gap-3"><code class="text-secondary font-code-md text-xs flex-shrink-0 w-12 pt-0.5">M-02</code><div><span class="text-white text-sm font-medium">Safe undo</span><p class="text-on-surface-variant text-xs mt-0.5">Moves files to .o2cli/trash/ instead of rm -rf.</p></div></div>
+<div class="px-5 py-3 flex gap-3"><code class="text-secondary font-code-md text-xs flex-shrink-0 w-12 pt-0.5">M-04</code><div><span class="text-white text-sm font-medium">Hard limits</span><p class="text-on-surface-variant text-xs mt-0.5">MAX_CMD_LENGTH (4096) and MAX_STEPS (20) enforced.</p></div></div>
+<div class="px-5 py-3 flex gap-3"><code class="text-secondary font-code-md text-xs flex-shrink-0 w-12 pt-0.5">M-06</code><div><span class="text-white text-sm font-medium">Debug log redaction</span><p class="text-on-surface-variant text-xs mt-0.5">Debug logging redacts API keys and truncates payloads.</p></div></div>
+<div class="px-5 py-3 flex gap-3"><code class="text-secondary font-code-md text-xs flex-shrink-0 w-12 pt-0.5">M-07</code><div><span class="text-white text-sm font-medium">History privacy</span><p class="text-on-surface-variant text-xs mt-0.5">0600 permissions; --no-history mode added.</p></div></div>
+<div class="px-5 py-3 flex gap-3"><code class="text-secondary font-code-md text-xs flex-shrink-0 w-12 pt-0.5">M-08</code><div><span class="text-white text-sm font-medium">Anchored regex allowlist</span><p class="text-on-surface-variant text-xs mt-0.5">Anchored regex patterns reject overly permissive rules.</p></div></div>
+</div>
+</div>
+<div class="glass-panel rounded-xl overflow-hidden">
+<button onclick="togglePanel(this)" class="w-full px-5 py-3 border-b border-outline-variant flex items-center gap-2 hover:bg-surface-container-high/50 transition-colors">
+<span class="danger-tag bg-tertiary/15 text-tertiary border border-tertiary/30">L-SERIES</span>
+<span class="text-white text-sm font-headline-md">Logic Fixes</span>
+<span class="ml-auto text-xs text-outline font-code-md">3 items</span>
+<span class="material-symbols-outlined text-outline text-lg transition-transform duration-300 panel-arrow" style="transform:rotate(-90deg)" data-icon="expand_more">expand_more</span>
+</button>
+<div class="panel-content divide-y divide-outline-variant" style="max-height:0px;opacity:0;">
+<div class="px-5 py-3 flex gap-3"><code class="text-tertiary font-code-md text-xs flex-shrink-0 w-12 pt-0.5">L-01</code><div><span class="text-white text-sm font-medium">Welcome file bug fix</span><p class="text-on-surface-variant text-xs mt-0.5">Removed erroneous _WELCOME_SHOWN_FILE.unlink() on exit.</p></div></div>
+<div class="px-5 py-3 flex gap-3"><code class="text-tertiary font-code-md text-xs flex-shrink-0 w-12 pt-0.5">L-02</code><div><span class="text-white text-sm font-medium">LLM call budget</span><p class="text-on-surface-variant text-xs mt-0.5">Per-session budget (default: 100) prevents runaway usage.</p></div></div>
+<div class="px-5 py-3 flex gap-3"><code class="text-tertiary font-code-md text-xs flex-shrink-0 w-12 pt-0.5">L-03</code><div><span class="text-white text-sm font-medium">In-process completion</span><p class="text-on-surface-variant text-xs mt-0.5">Completion command uses in-process handler, no re-invocation.</p></div></div>
+</div>
+</div>
+</div>
+</div>
+</section>
+
+<!-- Social Proof Section -->
+<section class="border-y border-[#30363d]/50 bg-surface-container-lowest py-stack-lg">
+<div class="max-w-7xl mx-auto px-6">
+<div class="flex flex-col md:flex-row justify-between items-center gap-stack-lg">
+<div class="flex gap-8">
+<div class="flex flex-col items-center md:items-start">
+<div class="flex items-center gap-2 mb-2">
+<span class="material-symbols-outlined text-[#ffa657]" data-icon="star" style="font-variation-settings:'FILL' 1">star</span>
+<span class="font-headline-md text-white">AI-Powered</span>
+</div>
+<p class="font-label-caps text-label-caps text-outline text-xs">LOCAL LLM INFERENCE</p>
+</div>
+<div class="flex flex-col items-center md:items-start">
+<div class="flex items-center gap-2 mb-2">
+<span class="material-symbols-outlined text-secondary" data-icon="lock" style="font-variation-settings:'FILL' 1">lock</span>
+<span class="font-headline-md text-white">Zero Cloud</span>
+</div>
+<p class="font-label-caps text-label-caps text-outline text-xs">NO DATA LEAVES YOUR MACHINE</p>
+</div>
+<div class="flex flex-col items-center md:items-start">
+<div class="flex items-center gap-2 mb-2">
+<span class="material-symbols-outlined text-primary" data-icon="shield" style="font-variation-settings:'FILL' 1">shield</span>
+<span class="font-headline-md text-white">Hardened</span>
+</div>
+<p class="font-label-caps text-label-caps text-outline text-xs">20+ SECURITY MITIGATIONS</p>
+</div>
+</div>
+<div class="flex flex-wrap justify-center gap-6 opacity-40 grayscale hover:grayscale-0 transition-all">
+<div class="font-display-xl text-[20px] font-bold text-white tracking-tighter">OLLAMA</div>
+<div class="font-display-xl text-[20px] font-bold text-white tracking-tighter">LM STUDIO</div>
+<div class="font-display-xl text-[20px] font-bold text-white tracking-tighter">PYTHON</div>
+</div>
+</div>
+</div>
+</section>
+
+<!-- CTA Section -->
+<section class="max-w-7xl mx-auto px-6 py-stack-xl text-center relative overflow-hidden">
+<div class="absolute inset-0 bg-primary-container/5 blur-3xl -z-10 rounded-full"></div>
+<h2 class="font-headline-lg text-headline-lg text-white mb-stack-md">Ready to control your terminal with AI?</h2>
+<p class="font-body-lg text-on-surface-variant mb-stack-lg max-w-2xl mx-auto">
+                No cloud API keys. No data leaks. Just local intelligence with enterprise-grade security hardening.
+            </p>
+<div class="flex flex-col sm:flex-row justify-center gap-stack-md">
+<a href="#quickstart" class="bg-primary-container text-on-primary-container px-8 py-4 font-headline-md text-body-md rounded-lg hover:opacity-90 transition-all flex items-center justify-center gap-2">
+                    Get Started
+                    <span class="material-symbols-outlined" data-icon="arrow_forward">arrow_forward</span>
+</a>
+<a href="https://github.com/nasaomar165/o2cli" target="_blank" class="border border-outline-variant text-white px-8 py-4 font-headline-md text-body-md rounded-lg hover:bg-surface-variant transition-all flex items-center justify-center gap-2">
+                    <span class="material-symbols-outlined" data-icon="code">code</span>
+                    View on GitHub
+                </a>
+</div>
+<div class="mt-stack-md text-on-surface-variant text-sm">
+<p>Requires <strong class="text-on-background">Python 3.10+</strong> and <strong class="text-on-background">Ollama</strong> or <strong class="text-on-background">LM Studio</strong></p>
+</div>
+</section>
+
+</main>
+
+<!-- Footer -->
+<footer class="bg-[#010409] border-t border-[#30363d] w-full">
+<div class="flex flex-col md:flex-row justify-between items-start py-12 px-8 max-w-7xl mx-auto gap-8">
+<div class="flex flex-col gap-2">
+<div class="flex items-center gap-2">
+<div class="font-mono font-bold text-[#c9d1d9]">O2Cli</div>
+<span class="text-[10px] font-code-md text-outline bg-surface-container px-1.5 py-0.5 rounded">v0.2.0</span>
+</div>
+<p class="font-inter text-xs text-[#8b949e] max-w-xs">AI-powered CLI tool that converts natural language to terminal commands. 100% local. Hardened.</p>
+</div>
+<div class="grid grid-cols-2 sm:grid-cols-3 gap-8">
+<div class="flex flex-col gap-2">
+<h4 class="font-label-caps text-label-caps text-outline text-[10px] tracking-widest mb-1">PROJECT</h4>
+<a class="font-inter text-xs text-[#8b949e] hover:text-[#0969DA] transition-colors duration-150" href="#features">Features</a>
+<a class="font-inter text-xs text-[#8b949e] hover:text-[#0969DA] transition-colors duration-150" href="#security">Security Model</a>
+<a class="font-inter text-xs text-[#8b949e] hover:text-[#0969DA] transition-colors duration-150" href="#commands">Commands</a>
+<a class="font-inter text-xs text-[#8b949e] hover:text-[#0969DA] transition-colors duration-150" href="#config">Configuration</a>
+<a class="font-inter text-xs text-[#8b949e] hover:text-[#0969DA] transition-colors duration-150" href="#quickstart">Quick Start</a>
+</div>
+<div class="flex flex-col gap-2">
+<h4 class="font-label-caps text-label-caps text-outline text-[10px] tracking-widest mb-1">RESOURCES</h4>
+<a class="font-inter text-xs text-[#8b949e] hover:text-[#0969DA] transition-colors duration-150" href="#">Changelog</a>
+<a class="font-inter text-xs text-[#8b949e] hover:text-[#0969DA] transition-colors duration-150" href="#">Contributing Guide</a>
+<a class="font-inter text-xs text-[#8b949e] hover:text-[#0969DA] transition-colors duration-150" href="#">License</a>
+</div>
+<div class="flex flex-col gap-2">
+<h4 class="font-label-caps text-label-caps text-outline text-[10px] tracking-widest mb-1">LINKS</h4>
+<a class="font-inter text-xs text-[#8b949e] hover:text-[#0969DA] transition-colors duration-150" href="https://github.com/nasaomar165/o2cli" target="_blank">GitHub Repository</a>
+<a class="font-inter text-xs text-[#8b949e] hover:text-[#0969DA] transition-colors duration-150" href="https://ollama.com" target="_blank">Ollama</a>
+<a class="font-inter text-xs text-[#8b949e] hover:text-[#0969DA] transition-colors duration-150" href="https://lmstudio.ai" target="_blank">LM Studio</a>
+</div>
+</div>
+</div>
+<div class="border-t border-[#30363d] py-4 px-8 max-w-7xl mx-auto">
+<p class="font-inter text-xs text-[#484f58] text-center">© 2024 O2Cli. Provided as-is for educational and personal use.</p>
+</div>
+</footer>
+
+<script>
+// ==========================================
+// Interactive Network Background Animation
+// ==========================================
+const canvas = document.getElementById('network-bg');
+const ctx = canvas.getContext('2d');
+let nodes = [];
+const nodeCount = 90;
+const connectionDistance = 140;
+const mouse = {
+    x: null,
+    y: null,
+    prevX: null,
+    prevY: null,
+    speed: 0,
+    radius: 0,
+    targetRadius: 0
+};
+
+const MOUSE_REPEL_RADIUS = 120;
+const MOUSE_CONNECT_RADIUS = 220;
+const MOUSE_ATTRACT_RADIUS = 350;
+
+function init() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    nodes = [];
+    for (let i = 0; i < nodeCount; i++) {
+        nodes.push({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height,
+            vx: (Math.random() - 0.5) * 0.4,
+            vy: (Math.random() - 0.5) * 0.4,
+            baseRadius: Math.random() * 1.5 + 0.8,
+            radius: 0,
+            alpha: Math.random() * 0.3 + 0.2,
+            baseAlpha: Math.random() * 0.3 + 0.2,
+            hue: 210 + Math.random() * 20 - 10
+        });
+    }
+}
+
+function animate() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Smooth mouse radius (glow area)
+    mouse.radius += (mouse.targetRadius - mouse.radius) * 0.08;
+
+    // Mouse speed calculation
+    if (mouse.x !== null && mouse.prevX !== null) {
+        const dx = mouse.x - mouse.prevX;
+        const dy = mouse.y - mouse.prevY;
+        mouse.speed = Math.sqrt(dx * dx + dy * dy);
+        mouse.targetRadius = Math.min(200, 60 + mouse.speed * 2);
+    }
+    mouse.prevX = mouse.x;
+    mouse.prevY = mouse.y;
+
+    // Draw mouse glow
+    if (mouse.x !== null && mouse.radius > 10) {
+        const glowGrad = ctx.createRadialGradient(
+            mouse.x, mouse.y, 0,
+            mouse.x, mouse.y, mouse.radius
+        );
+        glowGrad.addColorStop(0, 'rgba(9, 105, 218, 0.06)');
+        glowGrad.addColorStop(0.4, 'rgba(9, 105, 218, 0.03)');
+        glowGrad.addColorStop(1, 'rgba(9, 105, 218, 0)');
+        ctx.beginPath();
+        ctx.arc(mouse.x, mouse.y, mouse.radius, 0, Math.PI * 2);
+        ctx.fillStyle = glowGrad;
+        ctx.fill();
+    }
+
+    // Update and draw nodes
+    for (let i = 0; i < nodes.length; i++) {
+        const node = nodes[i];
+        let mouseDist = null;
+        let mdx = 0, mdy = 0;
+
+        // Mouse interaction
+        if (mouse.x !== null) {
+            mdx = node.x - mouse.x;
+            mdy = node.y - mouse.y;
+            mouseDist = Math.sqrt(mdx * mdx + mdy * mdy);
+        }
+
+        // Repulsion zone — push nodes away
+        if (mouseDist !== null && mouseDist < MOUSE_REPEL_RADIUS && mouseDist > 0) {
+            const force = (MOUSE_REPEL_RADIUS - mouseDist) / MOUSE_REPEL_RADIUS;
+            const angle = Math.atan2(mdy, mdx);
+            node.vx += Math.cos(angle) * force * 0.8;
+            node.vy += Math.sin(angle) * force * 0.8;
+        }
+
+        // Gentle attraction at medium range — nodes drift back toward cursor
+        if (mouseDist !== null && mouseDist > MOUSE_REPEL_RADIUS && mouseDist < MOUSE_ATTRACT_RADIUS) {
+            const force = (mouseDist - MOUSE_REPEL_RADIUS) / (MOUSE_ATTRACT_RADIUS - MOUSE_REPEL_RADIUS);
+            node.vx -= (mdx / mouseDist) * force * 0.015;
+            node.vy -= (mdy / mouseDist) * force * 0.015;
+        }
+
+        // Apply velocity with damping
+        node.x += node.vx;
+        node.y += node.vy;
+        node.vx *= 0.97;
+        node.vy *= 0.97;
+
+        // Minimum drift so nodes don't freeze
+        if (Math.abs(node.vx) < 0.05) node.vx += (Math.random() - 0.5) * 0.02;
+        if (Math.abs(node.vy) < 0.05) node.vy += (Math.random() - 0.5) * 0.02;
+
+        // Bounce off edges
+        if (node.x < 0) { node.x = 0; node.vx *= -0.5; }
+        if (node.x > canvas.width) { node.x = canvas.width; node.vx *= -0.5; }
+        if (node.y < 0) { node.y = 0; node.vy *= -0.5; }
+        if (node.y > canvas.height) { node.y = canvas.height; node.vy *= -0.5; }
+
+        // Proximity-based size and brightness
+        let proximityFactor = 0;
+        if (mouseDist !== null && mouseDist < MOUSE_CONNECT_RADIUS) {
+            proximityFactor = 1 - (mouseDist / MOUSE_CONNECT_RADIUS);
+        }
+        node.radius = node.baseRadius + proximityFactor * 2.5;
+        node.alpha = node.baseAlpha + proximityFactor * 0.6;
+
+        // Draw node
+        ctx.beginPath();
+        ctx.arc(node.x, node.y, node.radius, 0, Math.PI * 2);
+        const nodeAlpha = Math.min(1, node.alpha);
+        if (proximityFactor > 0.3) {
+            // Brighter, slightly shifted hue near cursor
+            const brightR = Math.round(50 + proximityFactor * 100);
+            const brightG = Math.round(150 + proximityFactor * 70);
+            const brightB = 255;
+            ctx.fillStyle = `rgba(${brightR}, ${brightG}, ${brightB}, ${nodeAlpha})`;
+        } else {
+            ctx.fillStyle = `rgba(9, 105, 218, ${nodeAlpha})`;
+        }
+        ctx.fill();
+
+        // Glow on nearby nodes
+        if (proximityFactor > 0.5) {
+            ctx.beginPath();
+            ctx.arc(node.x, node.y, node.radius + 4, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(9, 105, 218, ${proximityFactor * 0.1})`;
+            ctx.fill();
+        }
+
+        // Node-to-node connections
+        for (let j = i + 1; j < nodes.length; j++) {
+            const other = nodes[j];
+            const dx = node.x - other.x;
+            const dy = node.y - other.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+
+            if (dist < connectionDistance) {
+                const baseAlpha = (1 - dist / connectionDistance) * 0.3;
+                let lineAlpha = baseAlpha;
+
+                // Brighten connections near cursor
+                if (mouseDist !== null && mouseDist < MOUSE_CONNECT_RADIUS) {
+                    const otherMouseDist = Math.sqrt(
+                        (other.x - mouse.x) ** 2 + (other.y - mouse.y) ** 2
+                    );
+                    if (otherMouseDist < MOUSE_CONNECT_RADIUS) {
+                        const bothClose = Math.min(
+                            1 - mouseDist / MOUSE_CONNECT_RADIUS,
+                            1 - otherMouseDist / MOUSE_CONNECT_RADIUS
+                        );
+                        lineAlpha = baseAlpha + bothClose * 0.5;
+                    }
+                }
+
+                ctx.beginPath();
+                ctx.moveTo(node.x, node.y);
+                ctx.lineTo(other.x, other.y);
+                ctx.strokeStyle = `rgba(9, 105, 218, ${Math.min(0.8, lineAlpha)})`;
+                ctx.lineWidth = lineAlpha > 0.3 ? 1 : 0.5;
+                ctx.stroke();
+            }
+        }
+
+        // Mouse-to-node connection lines
+        if (mouseDist !== null && mouseDist < MOUSE_CONNECT_RADIUS) {
+            const lineAlpha = (1 - mouseDist / MOUSE_CONNECT_RADIUS) * 0.5;
+            ctx.beginPath();
+            ctx.moveTo(node.x, node.y);
+            ctx.lineTo(mouse.x, mouse.y);
+
+            // Gradient line from node to cursor
+            const grad = ctx.createLinearGradient(node.x, node.y, mouse.x, mouse.y);
+            grad.addColorStop(0, `rgba(9, 105, 218, ${lineAlpha})`);
+            grad.addColorStop(1, `rgba(173, 198, 255, ${lineAlpha * 0.3})`);
+            ctx.strokeStyle = grad;
+            ctx.lineWidth = 0.8 + proximityFactor;
+            ctx.stroke();
+        }
+    }
+
+    // Draw cursor dot
+    if (mouse.x !== null) {
+        ctx.beginPath();
+        ctx.arc(mouse.x, mouse.y, 2, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(173, 198, 255, 0.6)';
+        ctx.fill();
+    }
+
+    requestAnimationFrame(animate);
+}
+
+// Throttled mousemove for performance
+let rafPending = false;
+window.addEventListener('mousemove', (e) => {
+    mouse.x = e.clientX;
+    mouse.y = e.clientY;
+});
+
+window.addEventListener('mouseout', () => {
+    mouse.x = null;
+    mouse.y = null;
+    mouse.prevX = null;
+    mouse.prevY = null;
+    mouse.speed = 0;
+    mouse.targetRadius = 0;
+});
+
+window.addEventListener('resize', init);
+
+// Respect reduced motion preference
+const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+if (!prefersReducedMotion.matches) {
+    init();
+    animate();
+} else {
+    init();
+    // Draw static frame once
+    for (let i = 0; i < nodes.length; i++) {
+        const node = nodes[i];
+        ctx.beginPath();
+        ctx.arc(node.x, node.y, node.baseRadius, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(9, 105, 218, 0.3)';
+        ctx.fill();
+        for (let j = i + 1; j < nodes.length; j++) {
+            const other = nodes[j];
+            const dx = node.x - other.x;
+            const dy = node.y - other.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < connectionDistance) {
+                ctx.beginPath();
+                ctx.moveTo(node.x, node.y);
+                ctx.lineTo(other.x, other.y);
+                ctx.strokeStyle = `rgba(9, 105, 218, ${(1 - dist / connectionDistance) * 0.2})`;
+                ctx.lineWidth = 0.5;
+                ctx.stroke();
+            }
+        }
+    }
+}
+
+// Copy install command
+function copyInstall() {
+    const text = 'git clone https://github.com/nasaomar165/o2cli && cd o2cli && python o2cli.py --version';
+    navigator.clipboard.writeText(text).then(() => {
+        const btn = document.getElementById('copy-install-btn');
+        const icon = btn.querySelector('.material-symbols-outlined');
+        icon.textContent = 'check';
+        icon.style.color = '#78dc86';
+        setTimeout(() => {
+            icon.textContent = 'content_copy';
+            icon.style.color = '';
+        }, 2000);
+    });
+}
+
+// Command tabs
+const tabBtns = document.querySelectorAll('.tab-btn');
+const cmdPanels = document.querySelectorAll('.cmd-panel');
+
+tabBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+        const cmd = btn.dataset.cmd;
+        tabBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        cmdPanels.forEach(panel => {
+            if (panel.dataset.cmd === cmd) {
+                panel.classList.remove('hidden');
+            } else {
+                panel.classList.add('hidden');
+            }
+        });
+    });
+});
+
+// Mobile menu toggle
+const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+const mobileMenu = document.getElementById('mobile-menu');
+
+mobileMenuBtn.addEventListener('click', () => {
+    mobileMenu.classList.toggle('hidden');
+    const icon = mobileMenuBtn.textContent;
+    mobileMenuBtn.textContent = icon === 'menu' ? 'close' : 'menu';
+});
+
+mobileMenu.querySelectorAll('a').forEach(link => {
+    link.addEventListener('click', () => {
+        mobileMenu.classList.add('hidden');
+        mobileMenuBtn.textContent = 'menu';
+    });
+});
+
+// Active nav link on scroll
+const sections = document.querySelectorAll('section[id]');
+const navLinks = document.querySelectorAll('.nav-link');
+
+window.addEventListener('scroll', () => {
+    let current = '';
+    sections.forEach(section => {
+        const sectionTop = section.offsetTop - 100;
+        if (window.scrollY >= sectionTop) {
+            current = section.getAttribute('id');
+        }
+    });
+    navLinks.forEach(link => {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+            link.classList.add('active');
+        }
+    });
+});
+
+// Collapsible panels
+function togglePanel(btn) {
+    const content = btn.nextElementSibling;
+    const arrow = btn.querySelector('.panel-arrow');
+    const isOpen = content.style.maxHeight !== '0px';
+
+    if (isOpen) {
+        content.style.maxHeight = '0px';
+        content.style.opacity = '0';
+        arrow.style.transform = 'rotate(-90deg)';
+    } else {
+        content.style.maxHeight = content.scrollHeight + 'px';
+        content.style.opacity = '1';
+        arrow.style.transform = 'rotate(0deg)';
+    }
+}
+</script>
+</body>
+</html>
