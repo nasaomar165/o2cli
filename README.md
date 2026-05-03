@@ -111,3 +111,10 @@ Run the built-in diagnostic tool to check for missing dependencies, file permiss
 ```bash
 o2cli doctor
 ```
+## 🤝 Contributing
+ 
+1. Fork the repository
+2. Make changes to `o2cli.py`
+3. Open a pull request
+**download and run** — `httpx` , `click` , `rich` , `pydantic` , `pyperclip` only, no `pip install`.
+ 
