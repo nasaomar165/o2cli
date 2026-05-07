@@ -121,8 +121,8 @@ o2cli doctor
 ## ⚠️ Disclaimer
 The use of `O2cli` is entirely at your own risk.
 
-This tool uses artificial intelligence to generate shell commands automatically. 
-While it includes safety checks to prevent destructive operations, it does not guarantee the accuracy, safety, or appropriateness of any generated command.
-You are solely responsible for reviewing and understanding every command before executing it.
-The author(s) of this project accept no liability for data loss, system damage, security breaches, or any unintended consequences resulting from the use of this software.
+- This tool uses artificial intelligence to generate shell commands automatically. 
+- While it includes safety checks to prevent destructive operations, it does not guarantee the accuracy, safety, or appropriateness of any generated command.
+- You are solely responsible for reviewing and understanding every command before executing it.
+- The author(s) of this project accept no liability for data loss, system damage, security breaches, or any unintended consequences resulting from the use of this software.
  
