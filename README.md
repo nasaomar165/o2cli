@@ -125,4 +125,10 @@ The use of `O2cli` is entirely at your own risk.
 - While it includes safety checks to prevent destructive operations, it does not guarantee the accuracy, safety, or appropriateness of any generated command.
 - You are solely responsible for reviewing and understanding every command before executing it.
 - The author(s) of this project accept no liability for data loss, system damage, security breaches, or any unintended consequences resulting from the use of this software.
+
+- This software is provided "AS IS" without warranty of any kind. Use at your own risk.
+  - No Affiliation: This project is NOT affiliated with NASA or any government organization.
+  - No Liability: The authors are not responsible for any damages from using this software.
+  - Educational Use: Intended for educational and personal use only.
+  - Legal Compliance: Users are responsible for ensuring compliance with applicable laws.
  
