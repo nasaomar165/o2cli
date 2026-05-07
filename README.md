@@ -117,4 +117,12 @@ o2cli doctor
 2. Make changes to `o2cli.py`
 3. Open a pull request
 **download and run** — `httpx` , `click` , `rich` , `pydantic` , `pyperclip` only, no `pip install`.
+
+## ⚠️ Disclaimer
+The use of `O2cli` is entirely at your own risk.
+
+This tool uses artificial intelligence to generate shell commands automatically. 
+While it includes safety checks to prevent destructive operations, it does not guarantee the accuracy, safety, or appropriateness of any generated command.
+You are solely responsible for reviewing and understanding every command before executing it.
+The author(s) of this project accept no liability for data loss, system damage, security breaches, or any unintended consequences resulting from the use of this software.
  
