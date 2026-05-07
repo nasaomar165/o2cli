@@ -131,4 +131,5 @@ The use of `O2cli` is entirely at your own risk.
   - No Liability: The authors are not responsible for any damages from using this software.
   - Educational Use: Intended for educational and personal use only.
   - Legal Compliance: Users are responsible for ensuring compliance with applicable laws.
- 
+    
+ See [DISCLAIMER.md](DISCLAIMER.md) for full details.
